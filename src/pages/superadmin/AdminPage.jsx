@@ -10,7 +10,7 @@ import {
 import { extractError } from '../../services/apiClient';
 import { useToast } from '../../contexts/ToastContext';
 
-const EMPTY = { name: '', email: '', password: '', instansi_id: '' };
+const EMPTY = { name: '', email: '', password: '', role: 'admin', instansi_id: '' };
 
 export default function AdminPage() {
   const toast = useToast();
@@ -43,6 +43,7 @@ export default function AdminPage() {
       name: row.name,
       email: row.email,
       password: '',
+      role: row.role || 'admin',
       instansi_id: row.instansi_id ? String(row.instansi_id) : '',
     });
     setOpen(true);
@@ -106,6 +107,7 @@ export default function AdminPage() {
               <thead className="bg-surface text-left text-xs uppercase tracking-wide text-text-muted">
                 <tr>
                   <th className="px-4 py-3 font-medium">Nama</th>
+                  <th className="px-4 py-3 font-medium">Role</th>
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Instansi</th>
                   <th className="px-4 py-3 text-right font-medium">Aksi</th>
@@ -115,6 +117,11 @@ export default function AdminPage() {
                 {rows.map((r) => (
                   <tr key={r.id} className="border-t border-border-subtle">
                     <td className="px-4 py-3 font-medium text-text-primary">{r.name}</td>
+                    <td className="px-4 py-3 text-text-muted">
+                       <span className={`px-2 py-1 rounded text-xs font-semibold ${r.role === 'superadmin' ? 'bg-primary/10 text-primary' : 'bg-surface-hover text-text-secondary'}`}>
+                         {r.role === 'superadmin' ? 'Superadmin' : 'Admin'}
+                       </span>
+                    </td>
                     <td className="px-4 py-3 text-text-muted">{r.email}</td>
                     <td className="px-4 py-3 text-text-muted">{r.instansi?.nama || '-'}</td>
                     <td className="px-4 py-3">
@@ -170,6 +177,18 @@ export default function AdminPage() {
               required={!editing}
             />
           </Field>
+          <Field label="Role">
+            <SelectInput
+              value={form.role}
+              onChange={(e) => setForm({ ...form, role: e.target.value })}
+              options={[
+                { value: 'admin', label: 'Admin Instansi' },
+                { value: 'superadmin', label: 'Superadmin' }
+              ]}
+              required
+            />
+          </Field>
+          {form.role === 'admin' && (
           <Field label="Instansi">
             <SelectInput
               value={form.instansi_id}
@@ -179,6 +198,7 @@ export default function AdminPage() {
               required
             />
           </Field>
+          )}
         </form>
       </Modal>
     </>

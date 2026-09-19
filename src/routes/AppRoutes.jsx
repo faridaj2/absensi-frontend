@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AppLayout from '../components/layout/AppLayout';
 import Login from '../pages/auth/Login';
+import Register from '../pages/auth/Register';
 import InstansiPage from '../pages/superadmin/InstansiPage';
 import AdminPage from '../pages/superadmin/AdminPage';
 import JadwalPage from '../pages/admin/JadwalPage';
@@ -58,6 +59,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route
         path="/laporan/cetak"
         element={

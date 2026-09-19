@@ -11,6 +11,8 @@ const HOME = {
   pegawai: '/absen',
 };
 
+import { useEffect } from 'react';
+
 export default function Login() {
   const { login } = useAuth();
   const toast = useToast();
@@ -18,6 +20,12 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    import('../../services/authService').then(m => m.checkSetup()).then(req => {
+      if (req) navigate('/register', { replace: true });
+    }).catch(() => {});
+  }, [navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();

@@ -23,3 +23,13 @@ export async function updatePassword(payload) {
   const { data } = await apiClient.put('/profile/password', payload);
   return data;
 }
+
+export async function checkSetup() {
+  const { data } = await apiClient.get('/setup/check');
+  return data.setup_required;
+}
+
+export async function setup(payload) {
+  const { data } = await apiClient.post('/setup', payload);
+  return data;
+}
