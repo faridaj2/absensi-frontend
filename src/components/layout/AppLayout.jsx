@@ -122,7 +122,7 @@ function SidebarContent({ role, user, onLogout, onNavigate }) {
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-900 text-text-inverse">
           <Icon d={I.check} size={16} />
         </div>
-        <span className="text-base font-semibold text-text-primary">Hudhur</span>
+                      <span className="text-base font-semibold text-text-primary">SIKAP</span>
       </div>
 
       {/* Menu */}
@@ -279,7 +279,7 @@ export default function AppLayout() {
             >
               <Icon d={I.menu} size={18} />
             </button>
-            <span className="text-sm font-semibold text-text-primary">Hudhur</span>
+                            <span className="text-sm font-semibold text-text-primary">SIKAP</span>
           </div>
           <div className="hidden lg:block">
             <TopBar user={user} role={role} />

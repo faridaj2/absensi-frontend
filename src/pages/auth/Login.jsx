@@ -52,7 +52,7 @@ export default function Login() {
                 <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
               </svg>
             </div>
-            <span className="text-lg font-semibold">Hudhur</span>
+            <span className="text-lg font-semibold">SIKAP</span>
           </div>
 
           <div>
@@ -66,7 +66,7 @@ export default function Login() {
             </p>
           </div>
 
-          <div className="text-xs text-text-inverse/50">© {new Date().getFullYear()} Hudhur</div>
+          <div className="text-xs text-text-inverse/50">© {new Date().getFullYear()} SIKAP</div>
         </div>
 
         {/* Form panel */}
