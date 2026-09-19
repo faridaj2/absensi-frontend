@@ -6,9 +6,9 @@ import { useToast } from '../../contexts/ToastContext';
 
 function RingkasanCard({ label, value, total, tone = 'brand' }) {
   const tones = {
-    brand: 'from-brand-900 to-brand-950 text-text-inverse',
-    emerald: 'from-emerald-600 to-emerald-800 text-white',
-    sky: 'from-sky-600 to-sky-800 text-white',
+    brand: 'from-brand-800 to-brand-950 text-text-inverse',
+    emerald: 'from-brand-500 to-brand-900 text-white',
+    sky: 'from-gold-500 to-gold-700 text-brand-950',
     amber: 'from-amber-500 to-amber-700 text-white',
   };
   return (
@@ -25,9 +25,9 @@ function RingkasanCard({ label, value, total, tone = 'brand' }) {
 function PegawaiRow({ p }) {
   const statusColor = p.sudah_masuk
     ? p.status_masuk === 'telat'
-      ? 'bg-amber-50 text-amber-700 ring-amber-200'
-      : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-    : 'bg-rose-50 text-rose-700 ring-rose-200';
+      ? 'bg-status-warning-bg text-status-warning-text ring-status-warning-text/20'
+      : 'bg-status-success-bg text-status-success-text ring-status-success-text/20'
+    : 'bg-status-danger-bg text-status-danger-text ring-status-danger-text/20';
   const label = p.keterangan
     ? p.keterangan.toUpperCase()
     : p.sudah_masuk
@@ -54,10 +54,10 @@ function KelasCard({ k }) {
   const allDone = k.slot_terabsen === k.total_slot && k.total_slot > 0;
   const noneDone = k.slot_terabsen === 0;
   const badge = allDone
-    ? { cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200', label: 'Lengkap' }
+    ? { cls: 'bg-status-success-bg text-status-success-text ring-status-success-text/20', label: 'Lengkap' }
     : noneDone
-    ? { cls: 'bg-rose-50 text-rose-700 ring-rose-200', label: 'Belum' }
-    : { cls: 'bg-amber-50 text-amber-700 ring-amber-200', label: 'Sebagian' };
+    ? { cls: 'bg-status-danger-bg text-status-danger-text ring-status-danger-text/20', label: 'Belum' }
+    : { cls: 'bg-status-warning-bg text-status-warning-text ring-status-warning-text/20', label: 'Sebagian' };
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface-card p-4">
@@ -80,7 +80,7 @@ function KelasCard({ k }) {
             <div
               key={s.id}
               className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-xs ${
-                s.terabsen ? 'bg-emerald-50/60' : 'bg-rose-50/50'
+                s.terabsen ? 'bg-status-success-bg/50' : 'bg-status-danger-bg/50'
               }`}
             >
               <div className="min-w-0">
@@ -88,16 +88,16 @@ function KelasCard({ k }) {
                 <span className="text-text-muted"> · {s.mapel || '-'}</span>
                 <span className="text-text-muted"> · {s.guru_nama || '-'}</span>
                 {s.sebagai_pengganti && (
-                  <span className="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-800">
+                  <span className="ml-1 rounded-full bg-status-warning-bg px-1.5 py-0.5 text-[9px] font-medium text-status-warning-text ring-1 ring-status-warning-text/20">
                     Pengganti
                   </span>
                 )}
               </div>
               <div className="shrink-0 text-right">
                 {s.terabsen ? (
-                  <span className="font-semibold text-emerald-700">{s.jumlah_siswa} siswa</span>
+                  <span className="font-semibold text-status-success-text">{s.jumlah_siswa} siswa</span>
                 ) : (
-                  <span className="text-rose-600">belum</span>
+                  <span className="text-status-danger-text">belum</span>
                 )}
               </div>
             </div>

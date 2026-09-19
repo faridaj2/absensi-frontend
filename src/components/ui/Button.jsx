@@ -6,7 +6,7 @@ const VARIANTS = {
   ghost:
     'text-text-muted hover:bg-brand-100 hover:text-brand-900 focus:ring-brand-100 active:scale-[0.97]',
   danger:
-    'bg-status-danger-bg text-status-danger-text hover:bg-red-200 focus:ring-red-200 active:scale-[0.97]',
+    'bg-status-danger-bg text-status-danger-text hover:brightness-95 dark:hover:brightness-110 focus:ring-status-danger-bg active:scale-[0.97]',
 };
 
 export default function Button({

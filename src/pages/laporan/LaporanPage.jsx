@@ -8,10 +8,10 @@ import { extractError } from '../../services/apiClient';
 import { useToast } from '../../contexts/ToastContext';
 
 const STATUS_STYLES = {
-  hadir: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-  alpa: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
-  izin: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
-  sakit: 'bg-sky-50 text-sky-700 ring-1 ring-sky-200',
+  hadir: 'bg-status-success-bg text-status-success-text ring-1 ring-status-success-text/20',
+  alpa: 'bg-status-danger-bg text-status-danger-text ring-1 ring-status-danger-text/20',
+  izin: 'bg-status-warning-bg text-status-warning-text ring-1 ring-status-warning-text/20',
+  sakit: 'bg-status-info-bg text-status-info-text ring-1 ring-status-info-text/20',
 };
 
 const STATUS_LABEL = {
@@ -53,8 +53,8 @@ function StatusWithInfo({ status, keterangan }) {
         <span
           className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ring-1 ${
             confirmed
-              ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-              : 'bg-slate-50 text-slate-600 ring-slate-200'
+              ? 'bg-status-success-bg text-status-success-text ring-status-success-text/20'
+              : 'bg-surface text-text-muted ring-border-subtle'
           }`}
           title={keterangan}
         >
@@ -67,11 +67,11 @@ function StatusWithInfo({ status, keterangan }) {
 
 function SudahBadge({ ok }) {
   return ok ? (
-    <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-200">
+    <span className="inline-flex items-center rounded-full bg-status-success-bg px-2 py-0.5 text-[11px] font-medium text-status-success-text ring-1 ring-status-success-text/20">
       Sudah
     </span>
   ) : (
-    <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700 ring-1 ring-rose-200">
+    <span className="inline-flex items-center rounded-full bg-status-danger-bg px-2 py-0.5 text-[11px] font-medium text-status-danger-text ring-1 ring-status-danger-text/20">
       Belum
     </span>
   );
@@ -116,18 +116,18 @@ function PegawaiMatrix({ rows, bulan }) {
   }, [rows]);
 
   function cellInfo(list) {
-    if (!list || list.length === 0) return { kode: '-', cls: 'text-slate-300' };
+    if (!list || list.length === 0) return { kode: '-', cls: 'text-text-muted/50' };
     let adaMasuk = false;
     let ket = null;
     for (const r of list) {
       if (String(r.jenis || '').toLowerCase() === 'masuk') adaMasuk = true;
       if (r.keterangan) ket = String(r.keterangan).toLowerCase();
     }
-    if (ket === 'izin') return { kode: 'I', cls: 'text-amber-700' };
-    if (ket === 'sakit') return { kode: 'S', cls: 'text-sky-700' };
-    if (ket === 'alpa') return { kode: 'A', cls: 'text-rose-700 font-bold' };
-    if (adaMasuk) return { kode: 'H', cls: 'text-emerald-700' };
-    return { kode: 'A', cls: 'text-rose-700 font-bold' };
+    if (ket === 'izin') return { kode: 'I', cls: 'text-status-warning-text' };
+    if (ket === 'sakit') return { kode: 'S', cls: 'text-status-info-text' };
+    if (ket === 'alpa') return { kode: 'A', cls: 'text-status-danger-text font-bold' };
+    if (adaMasuk) return { kode: 'H', cls: 'text-status-success-text' };
+    return { kode: 'A', cls: 'text-status-danger-text font-bold' };
   }
 
   function fmtTgl(iso) {
@@ -153,7 +153,7 @@ function PegawaiMatrix({ rows, bulan }) {
               const hari = d.getDay() === 0 ? 7 : d.getDay();
               const libur = hari === 6 || hari === 7;
               return (
-                <th key={t} className={`px-1 py-1 text-center text-[10px] ${libur ? 'bg-rose-50' : ''}`}>
+                <th key={t} className={`px-1 py-1 text-center text-[10px] ${libur ? 'bg-status-danger-bg' : ''}`}>
                   <div className="font-bold">{fmtTgl(t)}</div>
                   <div className="font-normal opacity-70">{HARI[hari]}</div>
                 </th>
@@ -201,7 +201,7 @@ function SesiHeader({ meta, stat, expanded, onToggle }) {
     <button
       type="button"
       onClick={onToggle}
-      className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-slate-50"
+      className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-brand-100/60"
     >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-text-primary">
@@ -238,10 +238,10 @@ function SesiHeader({ meta, stat, expanded, onToggle }) {
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-5 text-[11px] text-text-muted">
           <span className="font-medium text-text-primary">{stat.total} siswa</span>
-          <span className="text-emerald-700">{stat.hadir} Hadir</span>
-          <span className="text-rose-700">{stat.alpa} Alpa</span>
-          <span className="text-amber-700">{stat.izin} Izin</span>
-          <span className="text-sky-700">{stat.sakit} Sakit</span>
+          <span className="text-status-success-text">{stat.hadir} Hadir</span>
+          <span className="text-status-danger-text">{stat.alpa} Alpa</span>
+          <span className="text-status-warning-text">{stat.izin} Izin</span>
+          <span className="text-status-info-text">{stat.sakit} Sakit</span>
         </div>
       </div>
     </button>
@@ -273,14 +273,14 @@ function SesiGroup({ group }) {
 
       {expanded && (
         <div className="border-t border-border-subtle">
-          <div className="flex items-center justify-between gap-2 bg-slate-50 px-3 py-1.5 text-[11px] text-text-muted">
+          <div className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5 text-[11px] text-text-muted">
             <span>
               Menampilkan {visibleRows.length} dari {group.rows.length} siswa
             </span>
             <label className="inline-flex cursor-pointer items-center gap-1.5 select-none">
               <input
                 type="checkbox"
-                className="h-3.5 w-3.5 accent-emerald-600"
+                className="h-3.5 w-3.5 accent-brand-500"
                 checked={showAll}
                 onChange={(e) => setShowAll(e.target.checked)}
               />
@@ -292,7 +292,7 @@ function SesiGroup({ group }) {
             <p className="py-6 text-center text-xs text-text-muted">Semua siswa hadir tanpa catatan.</p>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-white text-left text-[10px] uppercase tracking-wide text-text-muted">
+              <thead className="bg-surface-card text-left text-[10px] uppercase tracking-wide text-text-muted">
                 <tr>
                   <th className="px-3 py-1.5 font-medium">Siswa</th>
                   <th className="px-3 py-1.5 font-medium w-32">Status</th>
@@ -684,7 +684,7 @@ export default function LaporanPage() {
                     <td className="px-3 py-2 text-text-muted">
                       {r.guru_nama || '-'}
                       {r.sebagai_pengganti && (
-                        <span className="ml-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-amber-200">
+                        <span className="ml-1 rounded-full bg-status-warning-bg px-1.5 py-0.5 text-[10px] font-medium text-status-warning-text ring-1 ring-status-warning-text/20">
                           Pengganti
                         </span>
                       )}

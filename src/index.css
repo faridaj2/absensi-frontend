@@ -1,38 +1,102 @@
 @import "tailwindcss";
 @import "@heroui/styles";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-display: "Marcellus", "Georgia", serif;
+  --font-arabic: "Amiri", "Traditional Arabic", serif;
 
-  --color-brand-100: #EFFAF5;
-  --color-brand-200: #D8F0E4;
-  --color-brand-500: #52B788;
-  --color-brand-700: #1F5C46;
-  --color-brand-900: #163B2E;
-  --color-brand-950: #0F2A20;
+  /* Zamrud — identitas utama */
+  --color-brand-100: #E9F3EE;
+  --color-brand-200: #CDE6DA;
+  --color-brand-300: #A9D4C0;
+  --color-brand-500: #3F9374;
+  --color-brand-700: #17624C;
+  --color-brand-800: #10503F;
+  --color-brand-900: #0E4234;
+  --color-brand-950: #082B21;
 
-  --color-surface: #F5F6F8;
-  --color-surface-card: #FFFFFF;
+  /* Emas — aksen */
+  --color-gold-100: #F7EFD9;
+  --color-gold-300: #E9D391;
+  --color-gold-500: #C9A227;
+  --color-gold-700: #9A7A1C;
 
-  --color-border-subtle: #E7E9EC;
+  /* Netral hangat */
+  --color-surface: #F6F3EA;
+  --color-surface-card: #FDFCF7;
+  --color-border-subtle: #E7E1D2;
+  --color-text-primary: #1D2B25;
+  --color-text-muted: #707C74;
+  --color-text-inverse: #F6F8F5;
 
-  --color-text-primary: #101614;
-  --color-text-muted: #6B7280;
-  --color-text-inverse: #F4F8F6;
-
-  --color-status-success-bg: #DCFCE7;
-  --color-status-success-text: #15803D;
-  --color-status-warning-bg: #FEF3C7;
-  --color-status-warning-text: #B45309;
-  --color-status-danger-bg: #FEE2E2;
-  --color-status-danger-text: #B91C1C;
-  --color-status-info-bg: #E5E7EB;
-  --color-status-info-text: #374151;
+  --color-status-success-bg: #DFF2E4;
+  --color-status-success-text: #1F7A44;
+  --color-status-warning-bg: #FBF0D3;
+  --color-status-warning-text: #9A6B0F;
+  --color-status-danger-bg: #FBE3DD;
+  --color-status-danger-text: #B03A2E;
+  --color-status-info-bg: #E8E6DE;
+  --color-status-info-text: #4B5563;
 
   --radius-card: 1.25rem;
   --radius-chip: 0.75rem;
 
-  --shadow-card: 0 1px 2px rgba(16, 22, 20, 0.04), 0 8px 24px rgba(16, 22, 20, 0.04);
+  --shadow-card: 0 1px 2px rgba(20, 30, 25, 0.04), 0 10px 30px rgba(20, 30, 25, 0.06);
+
+  --animate-fade-in: fade-in 0.25s ease-out both;
+  --animate-slide-down: slide-down 0.3s ease-out both;
+  --animate-scale-in: scale-in 0.2s ease-out both;
+  --animate-slide-up: slide-up 0.35s ease-out both;
+  --animate-toast-in: toast-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ============ MODE GELAP ============ */
+.dark {
+  color-scheme: dark;
+
+  --color-brand-100: #14251E;
+  --color-brand-200: #1C392E;
+  --color-brand-300: #2C5A47;
+  --color-brand-500: #3FA07A;
+  --color-brand-700: #57BD92;
+  --color-brand-800: #6FD1A6;
+  --color-brand-900: #9FE8C6;
+  --color-brand-950: #D2F5E4;
+
+  --color-gold-100: #2A2415;
+  --color-gold-300: #C9A227;
+  --color-gold-500: #D4B04A;
+  --color-gold-700: #E4C877;
+
+  --color-surface: #0D1512;
+  --color-surface-card: #14201B;
+  --color-border-subtle: #263730;
+  --color-text-primary: #ECF2EE;
+  --color-text-muted: #8CA096;
+  --color-text-inverse: #0D1512;
+
+  --color-status-success-bg: rgba(52, 199, 123, 0.13);
+  --color-status-success-text: #7DDFA9;
+  --color-status-warning-bg: rgba(234, 179, 8, 0.14);
+  --color-status-warning-text: #EBCB6B;
+  --color-status-danger-bg: rgba(239, 68, 68, 0.15);
+  --color-status-danger-text: #F09A90;
+  --color-status-info-bg: rgba(148, 163, 184, 0.14);
+  --color-status-info-text: #B7C3CF;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+/* ============ MOTIF GEOMETRIS ISLAMI (bintang 8 / rub el hizb) ============ */
+:root {
+  --bg-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%230E4234' stroke-opacity='0.05'%3E%3Crect x='27' y='27' width='30' height='30'/%3E%3Crect x='27' y='27' width='30' height='30' transform='rotate(45 42 42)'/%3E%3Ccircle cx='42' cy='42' r='2.5'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.dark {
+  --bg-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%239FE8C6' stroke-opacity='0.05'%3E%3Crect x='27' y='27' width='30' height='30'/%3E%3Crect x='27' y='27' width='30' height='30' transform='rotate(45 42 42)'/%3E%3Ccircle cx='42' cy='42' r='2.5'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 @keyframes fade-in {
@@ -55,12 +119,15 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@theme {
-  --animate-fade-in: fade-in 0.25s ease-out both;
-  --animate-slide-down: slide-down 0.3s ease-out both;
-  --animate-scale-in: scale-in 0.2s ease-out both;
-  --animate-slide-up: slide-up 0.35s ease-out both;
-  --animate-toast-in: toast-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+@keyframes toast-in {
+  0% { opacity: 0; transform: translateX(120%) scale(0.95); }
+  60% { transform: translateX(-4px) scale(1); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
 }
 
 html,
@@ -72,10 +139,16 @@ body,
 body {
   margin: 0;
   background-color: var(--color-surface);
+  background-image: var(--bg-pattern);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--color-gold-300);
+  color: var(--color-brand-950);
 }
 
 /* Fix tabel scroll di mobile */
@@ -105,17 +178,6 @@ summary,
   cursor: pointer;
 }
 
-@keyframes toast-in {
-  0% { opacity: 0; transform: translateX(120%) scale(0.95); }
-  60% { transform: translateX(-4px) scale(1); }
-  100% { opacity: 1; transform: translateX(0) scale(1); }
-}
-
-@keyframes pulse-ring {
-  0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0.8; }
-  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
-}
-
 .custom-marker {
   background: transparent !important;
   border: none !important;
@@ -128,11 +190,16 @@ summary,
 
 .leaflet-control-attribution {
   font-size: 10px;
-  background: rgba(255, 255, 255, 0.75) !important;
+  background: color-mix(in srgb, var(--color-surface-card) 75%, transparent) !important;
+  color: var(--color-text-muted);
 }
 
 @media print {
   .no-print {
     display: none !important;
+  }
+  body {
+    background-image: none !important;
+    background-color: #fff;
   }
 }

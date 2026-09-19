@@ -26,12 +26,12 @@ function JamLabel({ slot }) {
 function SlotCard({ slot, onAction, actionLabel, actionVariant = 'primary', disabled, note }) {
   const done = !!slot.sudah_diabsen;
   return (
-    <div className={`flex flex-col gap-3 rounded-xl border p-4 transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between ${done ? 'border-emerald-200 bg-emerald-50/50' : 'border-border-subtle bg-surface-card'}`}>
+    <div className={`flex flex-col gap-3 rounded-xl border p-4 transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between ${done ? 'border-status-success-text/30 bg-status-success-bg/40' : 'border-border-subtle bg-surface-card'}`}>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-semibold text-text-primary">{slot.mapel}</p>
           {done && (
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 ring-1 ring-emerald-300">
+            <span className="rounded-full bg-status-success-bg px-2 py-0.5 text-[10px] font-semibold text-status-success-text ring-1 ring-status-success-text/20">
               ✓ Sudah diabsen
             </span>
           )}

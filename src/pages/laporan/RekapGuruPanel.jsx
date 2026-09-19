@@ -212,7 +212,7 @@ export default function RekapGuruPanel({ dari, sampai, instansiId, guruId }) {
                     <tr>
                       <th className="sticky left-0 z-10 bg-surface px-2 py-2 text-left">Nama</th>
                       {tanggalList.map((t) => (
-                        <th key={t.tanggal} className={`px-1 py-1 text-center ${t.is_libur ? 'bg-rose-50' : ''}`}>
+                        <th key={t.tanggal} className={`px-1 py-1 text-center ${t.is_libur ? 'bg-status-danger-bg' : ''}`}>
                           <div className="text-[10px] font-bold">{formatTanggal(t.tanggal)}</div>
                           <div className="text-[9px] font-normal">{HARI_LABEL[t.hari]}</div>
                         </th>
@@ -230,23 +230,23 @@ export default function RekapGuruPanel({ dari, sampai, instansiId, guruId }) {
                           const k = g.harian?.[t.tanggal] || '-';
                           const jp = jpMatrix.get(`${g.id}|${t.tanggal}`) || 0;
                           const color = {
-                            H: 'text-emerald-700',
-                            I: 'text-amber-700',
-                            S: 'text-sky-700',
-                            A: 'text-rose-700 font-bold',
-                            L: 'text-slate-400',
+                            H: 'text-status-success-text',
+                            I: 'text-status-warning-text',
+                            S: 'text-status-info-text',
+                            A: 'text-status-danger-text font-bold',
+                            L: 'text-text-muted/50',
                           }[k] || 'text-text-muted';
                           // Jika ada JP realisasi, tampilkan jumlah JP
                           if (jp > 0) {
                             return (
-                              <td key={t.tanggal} className="px-1 py-1.5 text-center font-bold text-emerald-700">
+                              <td key={t.tanggal} className="px-1 py-1.5 text-center font-bold text-status-success-text">
                                 {jp}
                               </td>
                             );
                           }
                           if (k === 'H') {
                             return (
-                              <td key={t.tanggal} className="px-1 py-1.5 text-center font-semibold text-sky-700">
+                              <td key={t.tanggal} className="px-1 py-1.5 text-center font-semibold text-status-info-text">
                                 H
                               </td>
                             );
@@ -265,7 +265,7 @@ export default function RekapGuruPanel({ dari, sampai, instansiId, guruId }) {
                       <td className="sticky left-0 z-10 bg-surface px-2 py-1.5">JUMLAH</td>
                       {tanggalList.map((t) => {
                         const dayTotal = guruList.reduce((a, g) => a + (jpMatrix.get(`${g.id}|${t.tanggal}`) || 0), 0);
-                        return <td key={t.tanggal} className="px-1 py-1.5 text-center text-emerald-700">{dayTotal || ''}</td>;
+                        return <td key={t.tanggal} className="px-1 py-1.5 text-center text-status-success-text">{dayTotal || ''}</td>;
                       })}
                       <td className="px-2 py-1.5 text-center text-text-primary">
                         {guruList.reduce((a, g) => a + tanggalList.reduce((b, t) => b + (jpMatrix.get(`${g.id}|${t.tanggal}`) || 0), 0), 0)}

@@ -29,7 +29,7 @@ const VARIANTS = {
   success: {
     bg: 'bg-status-success-bg',
     text: 'text-status-success-text',
-    ring: 'ring-green-200/60',
+    ring: 'ring-status-success-text/20',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 6L9 17l-5-5" />
@@ -39,7 +39,7 @@ const VARIANTS = {
   error: {
     bg: 'bg-status-danger-bg',
     text: 'text-status-danger-text',
-    ring: 'ring-red-200/60',
+    ring: 'ring-status-danger-text/20',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
@@ -51,7 +51,7 @@ const VARIANTS = {
   warning: {
     bg: 'bg-status-warning-bg',
     text: 'text-status-warning-text',
-    ring: 'ring-amber-200/60',
+    ring: 'ring-status-warning-text/20',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
@@ -63,7 +63,7 @@ const VARIANTS = {
   info: {
     bg: 'bg-status-info-bg',
     text: 'text-status-info-text',
-    ring: 'ring-zinc-300/60',
+    ring: 'ring-status-info-text/20',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
@@ -131,7 +131,7 @@ export function ToastProvider({ children }) {
                 type="button"
                 onClick={() => dismiss(t.id)}
                 aria-label="Tutup notifikasi"
-                className="mt-0.5 shrink-0 cursor-pointer rounded-full p-1 text-current opacity-60 transition hover:bg-black/5 hover:opacity-100"
+                className="mt-0.5 shrink-0 cursor-pointer rounded-full p-1 text-current opacity-60 transition hover:bg-black/5 dark:hover:bg-white/10 hover:opacity-100"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
