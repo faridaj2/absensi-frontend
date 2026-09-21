@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { PageHeader, Card, Button, Field, DateField } from '../../components/ui';
+import { PageHeader, Card, Button, Field, DateField, SelectInput } from '../../components/ui';
 import { monitorHariIni } from '../../services/laporanService';
+import { listInstansi } from '../../services/masterService';
 import { extractError } from '../../services/apiClient';
 import { useToast } from '../../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 function RingkasanCard({ label, value, total, tone = 'brand' }) {
   const tones = {
@@ -110,15 +112,35 @@ function KelasCard({ k }) {
 
 export default function MonitorPage() {
   const toast = useToast();
+  const { role } = useAuth();
+  const isSuperadmin = role === 'superadmin';
+  
   const [tanggal, setTanggal] = useState(() => new Date().toISOString().slice(0, 10));
+  const [instansiId, setInstansiId] = useState('');
+  const [instansiList, setInstansiList] = useState([]);
+  
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [filterRole, setFilterRole] = useState('all');
 
+  useEffect(() => {
+    if (isSuperadmin) {
+      listInstansi().then(setInstansiList).catch(console.error);
+    }
+  }, [isSuperadmin]);
+
   async function load() {
+    if (isSuperadmin && !instansiId) {
+      setData(null);
+      return; // superadmin harus pilih instansi dulu
+    }
+    
     setLoading(true);
     try {
-      const res = await monitorHariIni({ tanggal });
+      const params = { tanggal };
+      if (isSuperadmin && instansiId) params.instansi_id = instansiId;
+      
+      const res = await monitorHariIni(params);
       setData(res);
     } catch (err) {
       toast.error(extractError(err));
@@ -129,7 +151,7 @@ export default function MonitorPage() {
 
   useEffect(() => {
     load();
-  }, [tanggal]);
+  }, [tanggal, instansiId]);
 
   const pegawaiFiltered = (data?.pegawai || []).filter((p) =>
     filterRole === 'all' ? true : p.role === filterRole
@@ -150,6 +172,21 @@ export default function MonitorPage() {
 
       <Card className="mb-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {isSuperadmin && (
+            <Field label="Instansi">
+              <SelectInput
+                value={instansiId}
+                onChange={(e) => setInstansiId(e.target.value)}
+              >
+                <option value="">-- Pilih Instansi --</option>
+                {instansiList.map((ins) => (
+                  <option key={ins.id} value={ins.id}>
+                    {ins.nama}
+                  </option>
+                ))}
+              </SelectInput>
+            </Field>
+          )}
           <Field label="Tanggal">
             <DateField value={tanggal} onChange={setTanggal} />
           </Field>
