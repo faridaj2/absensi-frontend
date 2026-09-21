@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -39,6 +39,7 @@ const I = {
   menu: 'M3 6h18M3 12h18M3 18h18',
   sun: 'M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4l1.4-1.4',
   moon: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8',
+  download: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3',
 };
 
 /* ====== Bintang 8 (rub el hizb) — identitas visual ====== */
@@ -71,20 +72,59 @@ function Ornament({ className = '' }) {
   );
 }
 
+/* ====== PWA Install Button ====== */
+function InstallPwaButton() {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  if (!isInstallable) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') setIsInstallable(false);
+        setDeferredPrompt(null);
+      }}
+      aria-label="Install Aplikasi"
+      title="Install Aplikasi"
+      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border-subtle text-text-muted transition-all duration-300 hover:-translate-y-1 hover:border-gold-500/50 hover:text-gold-500 active:scale-95"
+    >
+      <Icon d={I.download} size={16} />
+    </button>
+  );
+}
+
 /* ====== Toggle tema (ikon) ====== */
 function ThemeIconButton() {
   const { theme, toggle } = useTheme();
   const label = theme === 'dark' ? 'Mode terang' : 'Mode gelap';
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-label={label}
-      title={label}
-      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border-subtle text-text-muted transition-all duration-300 hover:rotate-12 hover:border-gold-500/50 hover:text-gold-500 active:scale-95"
-    >
-      <Icon d={theme === 'dark' ? I.sun : I.moon} size={16} />
-    </button>
+    <div className="flex items-center gap-2">
+      <InstallPwaButton />
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={label}
+        title={label}
+        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border-subtle text-text-muted transition-all duration-300 hover:rotate-12 hover:border-gold-500/50 hover:text-gold-500 active:scale-95"
+      >
+        <Icon d={theme === 'dark' ? I.sun : I.moon} size={16} />
+      </button>
+    </div>
   );
 }
 
