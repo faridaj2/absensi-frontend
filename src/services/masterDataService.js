@@ -19,14 +19,23 @@ export async function hapusJadwal(id) {
   await apiClient.delete(`/jadwal/${id}`);
 }
 
-export async function listLokasi() {
-  const { data } = await apiClient.get('/lokasi');
+export async function listJamIstirahat(params = {}) {
+  const { data } = await apiClient.get('/jam-istirahat', { params });
   return data.data;
 }
 
-export async function simpanLokasi(payload) {
-  const { data } = await apiClient.post('/lokasi', payload);
+export async function simpanJamIstirahat(payload) {
+  const { data } = await apiClient.post('/jam-istirahat', payload);
   return data.data;
+}
+
+export async function updateJamIstirahat(id, payload) {
+  const { data } = await apiClient.put(`/jam-istirahat/${id}`, payload);
+  return data.data;
+}
+
+export async function hapusJamIstirahat(id) {
+  await apiClient.delete(`/jam-istirahat/${id}`);
 }
 
 export async function listMapel() {

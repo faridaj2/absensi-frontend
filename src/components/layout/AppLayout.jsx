@@ -101,7 +101,6 @@ const NAV = {
     { to: '/mapel', label: 'Mata Pelajaran', icon: I.book },
     { to: '/kelas', label: 'Kelas', icon: I.cap },
     { to: '/siswa', label: 'Data Siswa', icon: I.user },
-    { to: '/lokasi', label: 'Lokasi Absen', icon: I.pin },
     { to: '/jadwal', label: 'Jadwal Kerja', icon: I.history },
     { to: '/jadwal-pelajaran', label: 'Jadwal Pelajaran', icon: I.calendar },
     { to: '/izin-manual', label: 'Izin / Sakit / Alpa', icon: I.file },

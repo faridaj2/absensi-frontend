@@ -6,7 +6,6 @@ import Register from '../pages/auth/Register';
 import InstansiPage from '../pages/superadmin/InstansiPage';
 import AdminPage from '../pages/superadmin/AdminPage';
 import JadwalPage from '../pages/admin/JadwalPage';
-import LokasiPage from '../pages/admin/LokasiPage';
 import MapelPage from '../pages/admin/MapelPage';
 import KelasPage from '../pages/admin/KelasPage';
 import SiswaPage from '../pages/admin/SiswaPage';
@@ -96,7 +95,6 @@ export default function AppRoutes() {
         <Route path="instansi" element={<RequireRole roles={['superadmin']}><InstansiPage /></RequireRole>} />
         <Route path="admin" element={<RequireRole roles={['superadmin']}><AdminPage /></RequireRole>} />
         <Route path="jadwal" element={<RequireRole roles={['admin']}><JadwalPage /></RequireRole>} />
-        <Route path="lokasi" element={<RequireRole roles={['admin']}><LokasiPage /></RequireRole>} />
         <Route path="mapel" element={<RequireRole roles={['admin']}><MapelPage /></RequireRole>} />
         <Route path="kelas" element={<RequireRole roles={['admin']}><KelasPage /></RequireRole>} />
         <Route path="siswa" element={<RequireRole roles={['admin']}><SiswaPage /></RequireRole>} />
