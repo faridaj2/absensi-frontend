@@ -177,14 +177,9 @@ export default function MonitorPage() {
               <SelectInput
                 value={instansiId}
                 onChange={(e) => setInstansiId(e.target.value)}
-              >
-                <option value="">-- Pilih Instansi --</option>
-                {instansiList.map((ins) => (
-                  <option key={ins.id} value={ins.id}>
-                    {ins.nama}
-                  </option>
-                ))}
-              </SelectInput>
+                placeholder="-- Pilih Instansi --"
+                options={instansiList.map((ins) => ({ value: ins.id, label: ins.nama }))}
+              />
             </Field>
           )}
           <Field label="Tanggal">

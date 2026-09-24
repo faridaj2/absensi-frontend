@@ -154,7 +154,7 @@ export default function AbsenPage() {
           <h2 className="mb-2 text-base font-semibold text-text-primary">Panduan Absen</h2>
           <ul className="space-y-2 text-sm text-text-muted">
             <li>• Status otomatis (Masuk/Pulang) sesuai riwayat.</li>
-            <li>• Absen tidak bisa dilakukan mendahului jadwal jam yang ditentukan.</li>
+            <li>• Absen masuk tidak bisa mendahului jam masuk jadwal. Absen pulang bisa kapan saja.</li>
             <li>• Koordinat GPS diambil otomatis secara real-time.</li>
           </ul>
         </Card>
