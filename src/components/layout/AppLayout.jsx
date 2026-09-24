@@ -201,66 +201,72 @@ function SidebarContent({ role, onLogout, onNavigate }) {
 
   return (
     <div className="flex h-full flex-col rounded-card bg-surface-card p-3 shadow-card">
-      {/* Brand */}
-      <div className="flex items-center gap-2.5 px-2 py-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-800 to-brand-950 text-gold-300 shadow-md shadow-brand-950/20">
-          <Star8 size={17} />
+      {/* Top Fixed Section */}
+      <div className="shrink-0">
+        {/* Brand */}
+        <div className="flex items-center gap-2.5 px-2 py-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-800 to-brand-950 text-gold-300 shadow-md shadow-brand-950/20">
+            <Star8 size={17} />
+          </div>
+          <div className="leading-tight">
+            <span className="block font-display text-lg tracking-wide text-text-primary">SIKAP</span>
+            <span className="block text-[10px] uppercase tracking-widest text-text-muted">Darussalam 2</span>
+          </div>
         </div>
-        <div className="leading-tight">
-          <span className="block font-display text-lg tracking-wide text-text-primary">SIKAP</span>
-          <span className="block text-[10px] uppercase tracking-widest text-text-muted">Darussalam 2</span>
-        </div>
+
+        <Ornament className="my-2 px-2" />
       </div>
 
-      <Ornament className="my-2 px-2" />
-
-      {/* Menu */}
-      <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted">Menu</p>
-      <nav className="flex flex-col gap-0.5">
-        {items.map((link) => (
-          <SidebarItem
-            key={link.to}
-            to={link.to}
-            icon={link.icon}
-            label={link.label}
-            onNavigate={onNavigate}
-          />
-        ))}
-      </nav>
-
-      {/* Pengaturan (collapsible) */}
-      <button
-        type="button"
-        onClick={() => setOpenPengaturan((v) => !v)}
-        className="mt-6 flex w-full cursor-pointer items-center gap-2 px-3 pb-1 pt-0 text-left text-[10px] font-semibold uppercase tracking-widest text-text-muted transition hover:text-text-primary"
-      >
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={`shrink-0 transition-transform duration-200 ${openPengaturan ? 'rotate-90' : ''}`}
-        >
-          <path d="M9 18l6-6-6-6" />
-        </svg>
-        <span>Pengaturan</span>
-      </button>
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-out ${
-          openPengaturan ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-        }`}
-      >
+      {/* Scrollable Center Menu */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-border-subtle hover:scrollbar-thumb-text-muted/30 pr-1 -mr-1">
+        <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted">Menu</p>
         <nav className="flex flex-col gap-0.5">
-          <SidebarItem to="/pengaturan" icon={I.settings} label="Pengaturan" onNavigate={onNavigate} />
-          <SidebarItem to="/bantuan" icon={I.help} label="Bantuan" onNavigate={onNavigate} />
+          {items.map((link) => (
+            <SidebarItem
+              key={link.to}
+              to={link.to}
+              icon={link.icon}
+              label={link.label}
+              onNavigate={onNavigate}
+            />
+          ))}
         </nav>
+
+        {/* Pengaturan (collapsible) */}
+        <button
+          type="button"
+          onClick={() => setOpenPengaturan((v) => !v)}
+          className="mt-6 flex w-full cursor-pointer items-center gap-2 px-3 pb-1 pt-0 text-left text-[10px] font-semibold uppercase tracking-widest text-text-muted transition hover:text-text-primary"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`shrink-0 transition-transform duration-200 ${openPengaturan ? 'rotate-90' : ''}`}
+          >
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+          <span>Pengaturan</span>
+        </button>
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-out ${
+            openPengaturan ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <nav className="flex flex-col gap-0.5">
+            <SidebarItem to="/pengaturan" icon={I.settings} label="Pengaturan" onNavigate={onNavigate} />
+            <SidebarItem to="/bantuan" icon={I.help} label="Bantuan" onNavigate={onNavigate} />
+          </nav>
+        </div>
       </div>
 
-      <div className="mt-auto space-y-1 pt-3">
+      {/* Bottom Fixed Section */}
+      <div className="shrink-0 space-y-1 pt-3">
         <Ornament className="mb-2 px-2" />
         <button
           type="button"

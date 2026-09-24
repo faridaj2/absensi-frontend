@@ -90,36 +90,36 @@ function SlotRow({ s, isContinuation, isGroupStart }) {
 
   return (
     <li 
-      className={`flex items-center gap-3 bg-white px-2.5 py-2 ${isGroupStart ? 'mt-1 border-t border-gray-100' : ''} border-l-[3px] ${accentColor}`}
+      className={`flex items-center gap-3 bg-surface px-2.5 py-2 ${isGroupStart ? 'mt-1 border-t border-border-subtle' : ''} border-l-[3px] ${accentColor}`}
       aria-label={`Jam ${s.jam_ke}, ${mapelTitle}, ${statusText}`}
     >
       {/* Kotak Jam */}
-      <div className={`shrink-0 flex h-7 w-7 items-center justify-center rounded-md text-xs font-semibold ${s.terabsen ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+      <div className={`shrink-0 flex h-7 w-7 items-center justify-center rounded-md text-xs font-semibold ${s.terabsen ? 'bg-status-success-bg text-status-success-text' : 'bg-surface-elevated text-text-muted'}`}>
         {s.jam_ke}
       </div>
 
       {/* Info Mapel & Guru */}
       <div className="flex-1 min-w-0 flex flex-col justify-center" style={{ minHeight: '36px' }}>
         <div 
-          className={`truncate text-sm font-medium ${isContinuation ? 'text-gray-400 opacity-90' : 'text-gray-900'}`}
+          className={`truncate text-sm font-medium ${isContinuation ? 'text-text-muted opacity-90' : 'text-text-primary'}`}
           title={mapelTitle}
         >
           {mapelTitle}
         </div>
         {!isContinuation && (
           <div className="flex items-center truncate">
-            <span className="truncate text-xs text-gray-500" title={s.guru_nama}>
+            <span className="truncate text-xs text-text-muted" title={s.guru_nama}>
               {toTitleCase(s.guru_nama || '-')}
             </span>
             {s.sebagai_pengganti && (
-              <span className="ml-1.5 shrink-0 rounded-full bg-amber-100 px-1.5 py-[1px] text-[10px] font-medium text-amber-700">
+              <span className="ml-1.5 shrink-0 rounded-full bg-status-warning-bg px-1.5 py-[1px] text-[10px] font-medium text-status-warning-text">
                 Pengganti
               </span>
             )}
           </div>
         )}
         {isContinuation && (
-          <div className="truncate text-xs text-gray-400 italic">lanjutan</div>
+          <div className="truncate text-xs text-text-muted italic">lanjutan</div>
         )}
       </div>
 
