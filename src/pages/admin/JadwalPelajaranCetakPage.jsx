@@ -237,8 +237,8 @@ function ScheduleTable({ normalizedRows, activeDays, classList }) {
           return (
             <tr key={r.rowKey}>
               <td className="jp-td-jam">
-                <div className="jp-jam-label">{lblUtama}</div>
-                {lblSub && <div className="jp-jam-sub">{lblSub}</div>}
+                <span className="jp-jam-label">{lblUtama}</span>
+                {lblSub && <span className="jp-jam-sub">{lblSub}</span>}
               </td>
               {activeDays.map((h) => (
                 <ScheduleCell key={`${r.rowKey}-${h}`} items={r.cells.get(h)} classList={classList} />
