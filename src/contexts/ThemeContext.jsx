@@ -9,9 +9,7 @@ function getInitialTheme() {
   } catch {
     // ignore
   }
-  if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
-  }
+  // Paksa default ke 'light' alih-alih mengecek preferensi OS
   return 'light';
 }
 

@@ -5,12 +5,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 
 export default function PerangkatPage() {
-  const [tab, setTab] = useState('permintaan');
+  const [tab, setTab] = useState('perangkat');
   const { role } = useAuth();
   const toast = useToast();
-  const isSuperadmin = role === 'superadmin';
+  const isSuperadmin = ['superadmin', 'admin_instansi', 'admin'].includes(role);
 
-  const [requests, setRequests] = useState([]);
   const [devices, setDevices] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -18,9 +17,8 @@ export default function PerangkatPage() {
   async function loadData() {
     setLoading(true);
     try {
-      if (tab === 'permintaan') setRequests(await getDeviceRequests());
       if (tab === 'perangkat') setDevices(await getDevices());
-      if (tab === 'anomali') setLogs(await getDeviceAuditLogs());
+      if (tab === 'log') setLogs(await getDeviceAuditLogs());
     } catch (err) {
       console.error(err);
     } finally {
@@ -33,23 +31,19 @@ export default function PerangkatPage() {
   return (
     <>
       <PageHeader
-        title="Perangkat & Anomali"
-        subtitle="Kelola perangkat (device binding) guru untuk mencegah kecurangan absensi."
+        title="Pengelolaan Perangkat"
+        subtitle="Kelola perangkat (device binding) pegawai untuk mengontrol akses absensi."
       />
 
       <div className="mb-5 flex border-b border-border-subtle">
         <button
-          className={`px-4 py-2 font-medium ${tab === 'permintaan' ? 'border-b-2 border-brand-500 text-brand-700' : 'text-text-muted hover:text-text-primary'}`}
-          onClick={() => setTab('permintaan')}
-        >Permintaan Ganti</button>
-        <button
           className={`px-4 py-2 font-medium ${tab === 'perangkat' ? 'border-b-2 border-brand-500 text-brand-700' : 'text-text-muted hover:text-text-primary'}`}
           onClick={() => setTab('perangkat')}
-        >Perangkat Aktif</button>
+        >Daftar Perangkat</button>
         <button
-          className={`px-4 py-2 font-medium ${tab === 'anomali' ? 'border-b-2 border-brand-500 text-brand-700' : 'text-text-muted hover:text-text-primary'}`}
-          onClick={() => setTab('anomali')}
-        >Log Audit & Anomali</button>
+          className={`px-4 py-2 font-medium ${tab === 'log' ? 'border-b-2 border-brand-500 text-brand-700' : 'text-text-muted hover:text-text-primary'}`}
+          onClick={() => setTab('log')}
+        >Log Aktivitas</button>
       </div>
 
       <Card>
@@ -57,9 +51,8 @@ export default function PerangkatPage() {
           <p className="p-4 text-center text-text-muted">Memuat data...</p>
         ) : (
           <>
-            {tab === 'permintaan' && <TabPermintaan data={requests} onReload={loadData} isSuperadmin={isSuperadmin} />}
             {tab === 'perangkat' && <TabPerangkat data={devices} onReload={loadData} isSuperadmin={isSuperadmin} />}
-            {tab === 'anomali' && <TabAnomali data={logs} />}
+            {tab === 'log' && <TabLog data={logs} />}
           </>
         )}
       </Card>
@@ -192,7 +185,7 @@ function TabPerangkat({ data, onReload, isSuperadmin }) {
               {isSuperadmin && (
                 <td className="p-3">
                   {d.status !== 'revoked' && (
-                    <Button onClick={() => handleRevoke(d.id)} variant="secondary" size="sm">Cabut (Revoke)</Button>
+                    <Button onClick={() => handleRevoke(d.id)} variant="secondary" size="sm">Reset Perangkat</Button>
                   )}
                 </td>
               )}
@@ -204,27 +197,33 @@ function TabPerangkat({ data, onReload, isSuperadmin }) {
   );
 }
 
-function TabAnomali({ data }) {
+function TabLog({ data }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-border-subtle bg-surface-muted text-text-muted">
             <th className="p-3 font-medium">Waktu</th>
+            <th className="p-3 font-medium">Guru/Pegawai</th>
             <th className="p-3 font-medium">Event</th>
-            <th className="p-3 font-medium">Alasan</th>
+            <th className="p-3 font-medium">Alasan / Meta</th>
             <th className="p-3 font-medium">IP / User Agent</th>
           </tr>
         </thead>
         <tbody>
           {data.length === 0 ? (
-            <tr><td colSpan={4} className="p-3 text-center text-text-muted">Belum ada log anomali.</td></tr>
+            <tr><td colSpan={5} className="p-3 text-center text-text-muted">Belum ada log aktivitas.</td></tr>
           ) : data.map(log => (
             <tr key={log.id} className={`border-b border-border-subtle ${['anomaly', 'unauthorized_attempt'].includes(log.event) ? 'bg-red-50' : ''}`}>
-              <td className="p-3">{new Date(log.created_at).toLocaleString('id-ID')}</td>
+              <td className="p-3 whitespace-nowrap">{new Date(log.created_at).toLocaleString('id-ID')}</td>
+              <td className="p-3">{log.teacher?.nama || log.teacher_id}</td>
               <td className="p-3 font-semibold">{log.event}</td>
               <td className="p-3">{log.reason_code || '-'} {log.meta && JSON.stringify(log.meta)}</td>
-              <td className="p-3 text-xs max-w-xs truncate" title={log.user_agent}>{log.ip}<br/>{log.user_agent}</td>
+              <td className="p-3">
+                <div className="text-xs max-w-[12rem] truncate" title={log.ip + ' | ' + log.user_agent}>
+                  {log.ip}<br/>{log.user_agent}
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>

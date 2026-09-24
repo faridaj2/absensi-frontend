@@ -15,8 +15,9 @@
       (function () {
         try {
           var t = localStorage.getItem('theme');
+          // Paksa default 'light' jika tidak ada preferensi tersimpan
           if (t !== 'dark' && t !== 'light') {
-            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            t = 'light';
           }
           if (t === 'dark') document.documentElement.classList.add('dark');
           document.documentElement.style.colorScheme = t;

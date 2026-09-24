@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { PageHeader, Card, Button } from '../../components/ui';
+import { PageHeader, Card, Button, Modal } from '../../components/ui';
 // import CameraCapture from '../../components/absensi/CameraCapture'; // foto dinonaktifkan sementara
 import { absenPegawai, riwayatAbsensi } from '../../services/absensiService';
 import { listJadwal } from '../../services/masterDataService';
+import { checkDeviceStatus, registerDevice } from '../../services/deviceService';
 import { extractError } from '../../services/apiClient';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -15,14 +16,38 @@ export default function AbsenPage() {
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [jadwalHariIni, setJadwalHariIni] = useState(null);
+  const [deviceState, setDeviceState] = useState({ checking: true, error: null, status: null });
 
   // OTP State
   const [otpGenerated, setOtpGenerated] = useState('');
   const [otpInput, setOtpInput] = useState('');
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    async function initDevice() {
+      try {
+        const res = await checkDeviceStatus();
+        if (!res.has_active && !res.has_pending_request) {
+          try {
+            await registerDevice();
+            const newRes = await checkDeviceStatus();
+            setDeviceState({ checking: false, error: null, status: newRes });
+          } catch (regErr) {
+            setDeviceState({ checking: false, error: extractError(regErr), status: res });
+          }
+        } else {
+          setDeviceState({ checking: false, error: null, status: res });
+        }
+      } catch (err) {
+        setDeviceState({ checking: false, error: extractError(err), status: null });
+      }
+    }
+    initDevice();
   }, []);
 
   useEffect(() => {
@@ -66,11 +91,16 @@ export default function AbsenPage() {
     checkTodayStatus();
   }, []);
 
+  function handleClickKirimAbsen() {
+    setIsOtpModalOpen(true);
+  }
+
   async function handleSendAbsen() {
     if (otpInput !== otpGenerated) {
       toast.error('Kode OTP tidak sesuai. Silakan ketik kode yang muncul di layar.');
       return;
     }
+    setIsOtpModalOpen(false);
 
     // Foto dinonaktifkan sementara
     // if (!foto) {
@@ -128,6 +158,22 @@ export default function AbsenPage() {
         subtitle="Klik Kirim Absen. Lokasi GPS dan jenis absen diproses otomatis."
       />
 
+      {deviceState.checking ? (
+        <div className="mb-5 rounded-xl bg-blue-50 p-4 border border-blue-200 text-blue-800 text-sm">
+          Mengecek status perangkat...
+        </div>
+      ) : deviceState.error ? (
+        <div className="mb-5 rounded-xl bg-red-50 p-4 border border-red-200 text-red-800 text-sm">
+          Gagal mengecek perangkat: {deviceState.error}
+        </div>
+      ) : deviceState.status && !deviceState.status.has_active ? (
+        <div className="mb-5 rounded-xl bg-amber-50 p-4 border border-amber-200 text-amber-800 text-sm">
+          {deviceState.status.has_pending_request 
+            ? "Perangkat Anda sedang menunggu persetujuan Admin. Anda belum dapat melakukan absensi saat ini."
+            : "Perangkat ini tidak terdaftar atau dicabut izinnya. Silakan hubungi Admin."}
+        </div>
+      ) : null}
+
       <div className="grid gap-5 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <h2 className="mb-4 text-base font-semibold text-text-primary">
@@ -140,32 +186,53 @@ export default function AbsenPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="rounded-xl border border-warning-200 bg-warning-50 p-4">
-                  <p className="mb-2 text-sm text-warning-800">
-                    Ketik angka di bawah ini untuk mengonfirmasi absen {jenis}:
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-white px-4 py-2 text-2xl font-bold tracking-widest text-warning-900 shadow-inner border border-warning-200">
-                      {otpGenerated}
-                    </div>
-                    <input
-                      type="text"
-                      maxLength="4"
-                      className="w-24 rounded-lg border border-border-subtle bg-surface px-3 py-2 text-center text-lg font-bold tracking-widest text-text-primary outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-                      placeholder="----"
-                      value={otpInput}
-                      onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    />
-                  </div>
-                </div>
-
-                <Button onClick={handleSendAbsen} disabled={loading || otpInput.length !== 4} className="w-full sm:w-auto">
-                  {gettingLocation
-                    ? 'Mengambil Lokasi GPS...'
-                    : loading
-                    ? 'Mengirim Absensi...'
-                    : `Kirim Absen ${jenis === 'masuk' ? 'Masuk' : 'Pulang'}`}
+                <Button 
+                  onClick={handleClickKirimAbsen} 
+                  disabled={deviceState.checking || (deviceState.status && !deviceState.status.has_active)} 
+                  className="w-full sm:w-auto"
+                >
+                  {`Kirim Absen ${jenis === 'masuk' ? 'Masuk' : 'Pulang'}`}
                 </Button>
+
+                <Modal 
+                  isOpen={isOtpModalOpen} 
+                  onClose={() => setIsOtpModalOpen(false)} 
+                  title={`Konfirmasi Absen ${jenis === 'masuk' ? 'Masuk' : 'Pulang'}`}
+                >
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-warning-200 bg-warning-50 p-4">
+                      <p className="mb-3 text-sm text-warning-800">
+                        Ketik angka di bawah ini untuk mengonfirmasi kehadiran Anda:
+                      </p>
+                      <div className="flex flex-col items-center justify-center gap-4">
+                        <div className="rounded-lg bg-white/50 px-6 py-3 text-3xl font-black tracking-[0.5em] text-warning-900 shadow-sm border border-warning-200 select-none opacity-80">
+                          {otpGenerated}
+                        </div>
+                        <input
+                          type="text"
+                          maxLength="4"
+                          autoFocus
+                          className="w-32 rounded-lg border-2 border-brand-300 bg-surface px-3 py-3 text-center text-xl font-bold tracking-widest text-text-primary outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20 transition-all"
+                          placeholder="----"
+                          value={otpInput}
+                          onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && otpInput.length === 4) handleSendAbsen();
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-3 mt-4">
+                      <Button variant="secondary" onClick={() => setIsOtpModalOpen(false)}>Batal</Button>
+                      <Button 
+                        onClick={handleSendAbsen} 
+                        disabled={loading || otpInput.length !== 4}
+                      >
+                        {gettingLocation ? 'Ambil GPS...' : loading ? 'Mengirim...' : 'Konfirmasi'}
+                      </Button>
+                    </div>
+                  </div>
+                </Modal>
               </div>
             )}
           </div>
