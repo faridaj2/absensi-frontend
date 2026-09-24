@@ -8,7 +8,7 @@ export default function DataAbsensiPage() {
   const toast = useToast();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [tanggal, setTanggal] = useState(() => new Date().isoString().slice(0, 10));
+  const [tanggal, setTanggal] = useState(() => new Date().toISOString().slice(0, 10));
 
   async function load() {
     setLoading(true);
@@ -89,7 +89,7 @@ export default function DataAbsensiPage() {
                     <td className="px-4 py-3 text-text-primary">{item.waktu_absen ? new Date(item.waktu_absen).toLocaleTimeString('id-ID') : '-'}</td>
                     <td className="px-4 py-3">
                       {item.status ? (
-                        <span className={`'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider' ${item.status === 'telat' ? 'bg-status-warning-bg text-status-warning-text' : 'bg-status-success-bg text-status-success-text'}`}>
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${item.status === 'telat' ? 'bg-status-warning-bg text-status-warning-text' : 'bg-status-success-bg text-status-success-text'}`}>
                           {item.status}
                         </span>
                       ) : (
@@ -104,7 +104,7 @@ export default function DataAbsensiPage() {
                     </td>
                   </tr>
                 ))
-              }
+              )}
             </tbody>
           </table>
         </div>
