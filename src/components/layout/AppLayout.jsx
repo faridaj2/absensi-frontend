@@ -152,6 +152,7 @@ const NAV = {
   guru: [
     { to: '/absen', label: 'Absen', icon: I.check },
     { to: '/absen-siswa', label: 'Absen Siswa', icon: I.cap },
+    { to: '/jam-mengajar', label: 'Jam Mengajar', icon: I.calendar },
     { to: '/riwayat', label: 'Riwayat', icon: I.history },
     { to: '/laporan', label: 'Laporan', icon: I.chart },
   ],

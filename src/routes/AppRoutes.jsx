@@ -16,6 +16,7 @@ import IzinManualPage from '../pages/admin/IzinManualPage';
 import PerangkatPage from '../pages/admin/PerangkatPage';
 import AbsenPage from '../pages/absensi/AbsenPage';
 import AbsenSiswaPage from '../pages/guru/AbsenSiswaPage';
+import JamMengajarPage from '../pages/guru/JamMengajarPage';
 import RiwayatPage from '../pages/absensi/RiwayatPage';
 import LaporanPage from '../pages/laporan/LaporanPage';
 import LaporanCetakPage from '../pages/laporan/LaporanCetakPage';
@@ -106,6 +107,7 @@ export default function AppRoutes() {
         <Route path="monitor" element={<RequireRole roles={['admin', 'superadmin']}><MonitorPage /></RequireRole>} />
         <Route path="absen" element={<RequireRole roles={['guru', 'pegawai']}><AbsenPage /></RequireRole>} />
         <Route path="absen-siswa" element={<RequireRole roles={['guru']}><AbsenSiswaPage /></RequireRole>} />
+        <Route path="jam-mengajar" element={<RequireRole roles={['guru']}><JamMengajarPage /></RequireRole>} />
         <Route path="riwayat" element={<RequireRole roles={['guru', 'pegawai']}><RiwayatPage /></RequireRole>} />
         <Route path="laporan" element={<RequireRole roles={['superadmin', 'admin', 'guru']}><LaporanPage /></RequireRole>} />
         <Route path="pengaturan" element={<RequireAuth><PengaturanPage /></RequireAuth>} />
