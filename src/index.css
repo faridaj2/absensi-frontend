@@ -78,11 +78,11 @@
   --color-text-muted: #8CA096;
   --color-text-inverse: #0D1512;
 
-  --color-status-success-bg: rgba(52, 199, 123, 0.13);
+  --color-status-success-bg: #153223;
   --color-status-success-text: #7DDFA9;
-  --color-status-warning-bg: rgba(234, 179, 8, 0.14);
+  --color-status-warning-bg: #312711;
   --color-status-warning-text: #EBCB6B;
-  --color-status-danger-bg: rgba(239, 68, 68, 0.15);
+  --color-status-danger-bg: #321B1A;
   --color-status-danger-text: #F09A90;
   --color-status-info-bg: rgba(148, 163, 184, 0.14);
   --color-status-info-text: #B7C3CF;
