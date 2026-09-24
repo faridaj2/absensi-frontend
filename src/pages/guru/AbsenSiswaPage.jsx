@@ -191,7 +191,7 @@ export default function AbsenSiswaPage() {
 
       {!info.sudah_absen_masuk && (
         <div className="mb-4 rounded-xl bg-status-warning-bg px-4 py-2.5 text-sm text-status-warning-text">
-          Anda harus absen masuk terlebih dahulu sebelum mengabsen siswa.
+          Aksi ditolak. Pastikan Anda sudah absen masuk dan belum melakukan absen pulang.
         </div>
       )}
 
