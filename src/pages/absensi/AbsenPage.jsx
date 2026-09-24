@@ -42,7 +42,11 @@ export default function AbsenPage() {
         const today = new Date().toISOString().split('T')[0];
         const history = await riwayatAbsensi({ dari: today, sampai: today });
         const sudahMasuk = history.some((item) => item.jenis === 'masuk');
-        if (sudahMasuk) {
+        const sudahPulang = history.some((item) => item.jenis === 'pulang');
+        
+        if (sudahPulang) {
+          setJenis('selesai');
+        } else if (sudahMasuk) {
           setJenis('pulang');
         } else {
           setJenis('masuk');
@@ -84,7 +88,11 @@ export default function AbsenPage() {
           const result = await absenPegawai(formData);
           toast.success(`Absen ${result.jenis} berhasil${result.status ? ` (${result.status})` : ''}.`);
           setFoto(null);
-          if (jenis === 'masuk') setJenis('pulang');
+          if (jenis === 'masuk') {
+            setJenis('pulang');
+          } else if (jenis === 'pulang') {
+            setJenis('selesai');
+          }
         } catch (err) {
           toast.error(extractError(err));
         } finally {
@@ -110,22 +118,22 @@ export default function AbsenPage() {
       <div className="grid gap-5 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <h2 className="mb-4 text-base font-semibold text-text-primary">
-            Form Absen ({checkingStatus ? 'Mendeteksi...' : jenis === 'masuk' ? 'Absen Masuk' : 'Absen Pulang'})
+            Form Absen ({checkingStatus ? 'Mendeteksi...' : jenis === 'masuk' ? 'Absen Masuk' : jenis === 'pulang' ? 'Absen Pulang' : 'Selesai'})
           </h2>
           <div className="space-y-5">
-            {/* Foto dinonaktifkan sementara */}
-            {/* <div>
-              <p className="mb-2 text-sm font-medium text-text-primary">Ambil Foto</p>
-              <CameraCapture onCapture={setFoto} />
-            </div> */}
-
-            <Button onClick={handleSendAbsen} disabled={loading} className="w-full sm:w-auto">
-              {gettingLocation
-                ? 'Mengambil Lokasi GPS...'
-                : loading
-                ? 'Mengirim Absensi...'
-                : `Kirim Absen ${jenis === 'masuk' ? 'Masuk' : 'Pulang'}`}
-            </Button>
+            {jenis === 'selesai' ? (
+              <div className="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 flex items-center justify-center border border-green-200">
+                <p className="font-medium">Anda sudah menyelesaikan absen masuk dan pulang untuk hari ini.</p>
+              </div>
+            ) : (
+              <Button onClick={handleSendAbsen} disabled={loading} className="w-full sm:w-auto">
+                {gettingLocation
+                  ? 'Mengambil Lokasi GPS...'
+                  : loading
+                  ? 'Mengirim Absensi...'
+                  : `Kirim Absen ${jenis === 'masuk' ? 'Masuk' : 'Pulang'}`}
+              </Button>
+            )}
           </div>
         </Card>
 
