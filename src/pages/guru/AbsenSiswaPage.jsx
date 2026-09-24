@@ -67,10 +67,13 @@ export default function AbsenSiswaPage() {
   const [claiming, setClaiming] = useState(null);
 
   async function load() {
+    setLoading(true);
     try {
       setInfo(await slotHariIni());
     } catch (err) {
       toast.error(extractError(err));
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -161,7 +164,13 @@ export default function AbsenSiswaPage() {
       <PageHeader
         title="Absensi Siswa"
         subtitle={info.tanggal ? `Tanggal ${info.tanggal}` : 'Memuat...'}
-      />
+      >
+        {!selected && (
+          <Button variant="secondary" onClick={load} disabled={loading}>
+            {loading ? 'Memuat...' : '🔄 Refresh'}
+          </Button>
+        )}
+      </PageHeader>
 
       {!info.sudah_absen_masuk && (
         <div className="mb-4 rounded-xl bg-status-warning-bg px-4 py-2.5 text-sm text-status-warning-text">
