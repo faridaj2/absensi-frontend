@@ -107,8 +107,16 @@ export default function JadwalPelajaranCetakPage() {
         });
       }
     }
-    return Array.from(map.values()).sort((a, b) => a.key.localeCompare(b.key));
-  }, [rows]);
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.jam_mulai && b.jam_mulai) {
+        return a.jam_mulai.localeCompare(b.jam_mulai);
+      }
+      if (a.jam_ke != null && b.jam_ke != null) {
+        return a.jam_ke - b.jam_ke;
+      }
+      return a.key.localeCompare(b.key);
+    });
+  }, [rows, istirahat]);
 
   const cellMap = useMemo(() => {
     const map = new Map();
