@@ -133,11 +133,13 @@ const NAV = {
   superadmin: [
     { to: '/instansi', label: 'Instansi', icon: I.building },
     { to: '/admin', label: 'Admin', icon: I.user },
+    { to: '/perangkat', label: 'Perangkat & Anomali', icon: I.pin },
     { to: '/monitor', label: 'Monitor', icon: I.bell },
     { to: '/laporan', label: 'Laporan', icon: I.chart },
   ],
   admin: [
     { to: '/guru-pegawai', label: 'Guru & Pegawai', icon: I.user },
+    { to: '/perangkat', label: 'Perangkat & Anomali', icon: I.pin },
     { to: '/mapel', label: 'Mata Pelajaran', icon: I.book },
     { to: '/kelas', label: 'Kelas', icon: I.cap },
     { to: '/siswa', label: 'Data Siswa', icon: I.user },
