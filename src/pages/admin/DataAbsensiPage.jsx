@@ -85,9 +85,9 @@ export default function DataAbsensiPage() {
                       <p className="font-medium text-text-primary">{item.user?.name}</p>
                       <p className="text-xs text-text-muted capitalize">{item.user?.role}</p>
                     </td>
-                    4d className="px-4 py-3 uppercase text-xs font-semibold">{item.jenis || '-'}</td>
-                    4d className="px-4 py-3 text-text-primary">{item.waktu_absen ? new Date(item.waktu_absen).toLocaleTimeString('id-ID') : '-'}</td>
-                    4d className="px-4 py-3">
+                    <td className="px-4 py-3 uppercase text-xs font-semibold">{item.jenis || '-'}</td>
+                    <td className="px-4 py-3 text-text-primary">{item.waktu_absen ? new Date(item.waktu_absen).toLocaleTimeString('id-ID') : '-'}</td>
+                    <td className="px-4 py-3">
                       {item.status ? (
                         <span className={`'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider' ${item.status === 'telat' ? 'bg-status-warning-bg text-status-warning-text' : 'bg-status-success-bg text-status-success-text'}`}>
                           {item.status}
