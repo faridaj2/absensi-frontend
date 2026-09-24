@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { listAssignment, listJadwal } from '../../services/masterDataService';
+import { listAssignment, listJadwal, listJamIstirahat } from '../../services/masterDataService';
 import { extractError } from '../../services/apiClient';
 import './jadwalPelajaranCetak.css';
 
@@ -42,6 +42,7 @@ function jamLabel(r) {
 export default function JadwalPelajaranCetakPage() {
   const [rows, setRows] = useState([]);
   const [jadwal, setJadwal] = useState([]);
+  const [istirahat, setIstirahat] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -50,10 +51,11 @@ export default function JadwalPelajaranCetakPage() {
     async function run() {
       setLoading(true);
       try {
-        const [a, j] = await Promise.all([listAssignment(), listJadwal()]);
+        const [a, j, ist] = await Promise.all([listAssignment(), listJadwal(), listJamIstirahat()]);
         if (!alive) return;
         setRows(a || []);
         setJadwal(j || []);
+        setIstirahat(ist || []);
       } catch (err) {
         if (alive) setError(extractError(err));
       } finally {
@@ -73,9 +75,10 @@ export default function JadwalPelajaranCetakPage() {
   const hariList = useMemo(() => {
     const set = new Set(rows.map((r) => r.hari));
     const fromJadwal = jadwal.map((j) => j.hari);
-    const all = [...new Set([...set, ...fromJadwal])].filter(Boolean).sort((a, b) => a - b);
+    const fromIstirahat = istirahat.map((ist) => ist.hari);
+    const all = [...new Set([...set, ...fromJadwal, ...fromIstirahat])].filter(Boolean).sort((a, b) => a - b);
     return all.length > 0 ? all : [1, 2, 3, 4, 5, 6];
-  }, [rows, jadwal]);
+  }, [rows, jadwal, istirahat]);
 
   const jamList = useMemo(() => {
     const map = new Map();
@@ -87,6 +90,20 @@ export default function JadwalPelajaranCetakPage() {
           jam_ke: r.jam_ke,
           jam_mulai: r.jam_mulai,
           jam_selesai: r.jam_selesai,
+          type: 'pelajaran'
+        });
+      }
+    }
+    for (const ist of istirahat) {
+      const k = `t${ist.jam_mulai}`;
+      if (!map.has(k)) {
+        map.set(k, {
+          key: k,
+          jam_ke: null,
+          jam_mulai: ist.jam_mulai,
+          jam_selesai: ist.jam_selesai,
+          type: 'istirahat',
+          label: ist.label || 'Istirahat',
         });
       }
     }
@@ -98,10 +115,15 @@ export default function JadwalPelajaranCetakPage() {
     for (const r of rows) {
       const key = `${r.hari}|${jamKey(r)}`;
       if (!map.has(key)) map.set(key, []);
-      map.get(key).push(r);
+      map.get(key).push({ ...r, _type: 'pelajaran' });
+    }
+    for (const ist of istirahat) {
+      const key = `${ist.hari}|t${ist.jam_mulai}`;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push({ ...ist, _type: 'istirahat' });
     }
     return map;
-  }, [rows]);
+  }, [rows, istirahat]);
 
   const guruList = useMemo(() => {
     const map = new Map();
@@ -166,6 +188,13 @@ export default function JadwalPelajaranCetakPage() {
                             ) : (
                               <div className="jp-cell-stack">
                                 {items.map((r) => {
+                                  if (r._type === 'istirahat') {
+                                    return (
+                                      <div key={`ist-${r.id}`} className="jp-card jp-card-istirahat" style={{ background: '#f3f4f6', borderColor: '#e5e7eb', color: '#4b5563', padding: '0.5rem', textAlign: 'center', fontWeight: '500' }}>
+                                        ☕ {r.label || 'Istirahat'}
+                                      </div>
+                                    );
+                                  }
                                   const p = hashToPalette(r.guru?.id ?? r.guru_id);
                                   return (
                                     <div
