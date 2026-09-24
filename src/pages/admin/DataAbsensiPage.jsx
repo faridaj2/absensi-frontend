@@ -64,20 +64,18 @@ export default function DataAbsensiPage() {
                 <th className="px-4 py-3 font-medium">Pegawai</th>
                 <th className="px-4 py-3 font-medium">Jenis</th>
                 <th className="px-4 py-3 font-medium">Waktu</th>
-                <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Keterangan</th>
-                <th className="px-4 py-3 font-medium">Jarak</th>
                 <th className="px-4 py-3 font-medium text-right">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-text-muted">Memuat data...</td>
+                  <td colSpan={5} className="px-4 py-8 text-center text-text-muted">Memuat data...</td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-text-muted">Tidak ada data absensi pada tanggal ini.</td>
+                  <td colSpan={5} className="px-4 py-8 text-center text-text-muted">Tidak ada data absensi pada tanggal ini.</td>
                 </tr>
               ) : (
                 data.map((item) => (
@@ -88,17 +86,9 @@ export default function DataAbsensiPage() {
                     </td>
                     <td className="px-4 py-3 uppercase text-xs font-semibold">{item.jenis || '-'}</td>
                     <td className="px-4 py-3 text-text-primary">{item.waktu_absen ? new Date(item.waktu_absen).toLocaleTimeString('id-ID') : '-'}</td>
-                    <td className="px-4 py-3">
-                      {item.status ? (
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${item.status === 'telat' ? 'bg-status-warning-bg text-status-warning-text' : 'bg-status-success-bg text-status-success-text'}`}>
-                          {item.status}
-                        </span>
-                      ) : (
-                        '-'
-                      )}
+                    <td className="px-4 py-3 text-text-primary capitalize font-medium">
+                      {item.keterangan ? item.keterangan : (item.status ? item.status : '-')}
                     </td>
-                    <td className="px-4 py-3 text-text-primary capitalize font-medium">{item.keterangan || '-'}</td>
-                    <td className="px-4 py-3 text-text-muted">{item.jarak_meter ? `${item.jarak_meter}m` : '-'}</td>
                     <td className="px-4 py-3 text-right">
                       <Button variant="danger" size="sm" onClick={() => handleDelete(item.id)}>
                         Hapus
