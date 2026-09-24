@@ -146,6 +146,7 @@ const NAV = {
     { to: '/jadwal', label: 'Jadwal Kerja', icon: I.history },
     { to: '/jadwal-pelajaran', label: 'Jadwal Pelajaran', icon: I.calendar },
     { to: '/izin-manual', label: 'Izin / Sakit / Alpa', icon: I.file },
+    { to: '/data-absensi', label: 'Data Absensi', icon: I.history },
     { to: '/monitor', label: 'Monitor', icon: I.bell },
     { to: '/laporan', label: 'Laporan', icon: I.chart },
   ],

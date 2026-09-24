@@ -46,3 +46,8 @@ export async function getJadwalSaya() {
   const { data } = await apiClient.get('/jadwal-mengajar');
   return data;
 }
+
+export async function deleteAbsensiPegawai(id) {
+  const { data } = await apiClient.delete(`/absensi/${id}`);
+  return data;
+}

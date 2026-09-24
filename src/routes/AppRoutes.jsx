@@ -24,6 +24,7 @@ import LaporanGuruCetakPage from '../pages/laporan/LaporanGuruCetakPage';
 import MonitorPage from '../pages/monitor/MonitorPage';
 import PengaturanPage from '../pages/pengaturan/PengaturanPage';
 import BantuanPage from '../pages/bantuan/BantuanPage';
+import DataAbsensiPage from '../pages/admin/DataAbsensiPage';
 
 const HOME = {
   superadmin: '/instansi',
@@ -104,6 +105,7 @@ export default function AppRoutes() {
         <Route path="jadwal-pelajaran" element={<RequireRole roles={['admin']}><JadwalPelajaranPage /></RequireRole>} />
         <Route path="perangkat" element={<RequireRole roles={['admin', 'superadmin']}><PerangkatPage /></RequireRole>} />
         <Route path="izin-manual" element={<RequireRole roles={['admin']}><IzinManualPage /></RequireRole>} />
+        <Route path="data-absensi" element={<RequireRole roles={['admin']}><DataAbsensiPage /></RequireRole>} />
         <Route path="monitor" element={<RequireRole roles={['admin', 'superadmin']}><MonitorPage /></RequireRole>} />
         <Route path="absen" element={<RequireRole roles={['guru', 'pegawai']}><AbsenPage /></RequireRole>} />
         <Route path="absen-siswa" element={<RequireRole roles={['guru']}><AbsenSiswaPage /></RequireRole>} />

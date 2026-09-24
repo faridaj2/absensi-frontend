@@ -16,6 +16,10 @@ export default function AbsenPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [jadwalHariIni, setJadwalHariIni] = useState(null);
 
+  // OTP State
+  const [otpGenerated, setOtpGenerated] = useState('');
+  const [otpInput, setOtpInput] = useState('');
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -48,8 +52,10 @@ export default function AbsenPage() {
           setJenis('selesai');
         } else if (sudahMasuk) {
           setJenis('pulang');
+          setOtpGenerated(Math.floor(1000 + Math.random() * 9000).toString());
         } else {
           setJenis('masuk');
+          setOtpGenerated(Math.floor(1000 + Math.random() * 9000).toString());
         }
       } catch (err) {
         console.error('Gagal memuat status absensi:', err);
@@ -61,6 +67,11 @@ export default function AbsenPage() {
   }, []);
 
   async function handleSendAbsen() {
+    if (otpInput !== otpGenerated) {
+      toast.error('Kode OTP tidak sesuai. Silakan ketik kode yang muncul di layar.');
+      return;
+    }
+
     // Foto dinonaktifkan sementara
     // if (!foto) {
     //   toast.warning('Silakan ambil foto terlebih dahulu.');
@@ -88,8 +99,10 @@ export default function AbsenPage() {
           const result = await absenPegawai(formData);
           toast.success(`Absen ${result.jenis} berhasil${result.status ? ` (${result.status})` : ''}.`);
           setFoto(null);
+          setOtpInput('');
           if (jenis === 'masuk') {
             setJenis('pulang');
+            setOtpGenerated(Math.floor(1000 + Math.random() * 9000).toString());
           } else if (jenis === 'pulang') {
             setJenis('selesai');
           }
@@ -126,13 +139,34 @@ export default function AbsenPage() {
                 <p className="font-medium">Anda sudah menyelesaikan absen masuk dan pulang untuk hari ini.</p>
               </div>
             ) : (
-              <Button onClick={handleSendAbsen} disabled={loading} className="w-full sm:w-auto">
-                {gettingLocation
-                  ? 'Mengambil Lokasi GPS...'
-                  : loading
-                  ? 'Mengirim Absensi...'
-                  : `Kirim Absen ${jenis === 'masuk' ? 'Masuk' : 'Pulang'}`}
-              </Button>
+              <div className="space-y-4">
+                <div className="rounded-xl border border-warning-200 bg-warning-50 p-4">
+                  <p className="mb-2 text-sm text-warning-800">
+                    Ketik angka di bawah ini untuk mengonfirmasi absen {jenis}:
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="rounded-lg bg-white px-4 py-2 text-2xl font-bold tracking-widest text-warning-900 shadow-inner border border-warning-200">
+                      {otpGenerated}
+                    </div>
+                    <input
+                      type="text"
+                      maxLength="4"
+                      className="w-24 rounded-lg border border-border-subtle bg-surface px-3 py-2 text-center text-lg font-bold tracking-widest text-text-primary outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                      placeholder="----"
+                      value={otpInput}
+                      onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    />
+                  </div>
+                </div>
+
+                <Button onClick={handleSendAbsen} disabled={loading || otpInput.length !== 4} className="w-full sm:w-auto">
+                  {gettingLocation
+                    ? 'Mengambil Lokasi GPS...'
+                    : loading
+                    ? 'Mengirim Absensi...'
+                    : `Kirim Absen ${jenis === 'masuk' ? 'Masuk' : 'Pulang'}`}
+                </Button>
+              </div>
             )}
           </div>
         </Card>
