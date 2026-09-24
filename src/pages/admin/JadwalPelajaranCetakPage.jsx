@@ -232,11 +232,13 @@ function ScheduleTable({ normalizedRows, activeDays, classList }) {
           const lblUtama = r.type === 'istirahat'
              ? (r.timeRange !== 'unknown' ? r.timeRange : 'Istirahat')
              : (r.jam_ke != null ? `Jam ke-${r.jam_ke}` : (r.timeRange !== 'unknown' ? r.timeRange : '-'));
+          const lblSub = r.type === 'pelajaran' && r.jam_ke != null && r.timeRange !== 'unknown' ? r.timeRange : null;
              
           return (
             <tr key={r.rowKey}>
               <td className="jp-td-jam">
                 <div className="jp-jam-label">{lblUtama}</div>
+                {lblSub && <div className="jp-jam-sub">{lblSub}</div>}
               </td>
               {activeDays.map((h) => (
                 <ScheduleCell key={`${r.rowKey}-${h}`} items={r.cells.get(h)} classList={classList} />
