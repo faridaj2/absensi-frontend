@@ -133,6 +133,7 @@ const NAV = {
   superadmin: [
     { to: '/instansi', label: 'Instansi', icon: I.building },
     { to: '/admin', label: 'Admin', icon: I.user },
+    { to: '/arsip-laporan', label: 'Arsip Laporan', icon: I.history },
     { to: '/perangkat', label: 'Perangkat & Anomali', icon: I.pin },
     { to: '/monitor', label: 'Monitor', icon: I.bell },
     { to: '/laporan', label: 'Laporan', icon: I.chart },
