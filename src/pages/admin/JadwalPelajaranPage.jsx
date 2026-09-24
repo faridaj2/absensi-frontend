@@ -42,61 +42,7 @@ function AvatarInitial({ name }) {
   );
 }
 
-function JamLabel({ row }) {
-  if (row.jam_mulai && row.jam_selesai) return `${row.jam_mulai}–${row.jam_selesai}`;
-  if (row.jam_ke != null) return `Jam ke-${row.jam_ke}`;
-  return '-';
-}
 
-function PelajaranRow({ row, onEdit, onRemove }) {
-  return (
-    <tr className="border-t border-border-subtle">
-      <td className="whitespace-nowrap px-4 py-3 font-medium text-text-primary">
-        <JamLabel row={row} />
-      </td>
-      <td className="px-4 py-3 text-text-primary">{row.mapel?.nama_mapel || '-'}</td>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          <AvatarInitial name={row.guru?.name} />
-          <span className="text-text-muted">{row.guru?.name || '-'}</span>
-        </div>
-      </td>
-      <td className="px-4 py-3 text-text-muted">{row.kelas_nama || row.kelas_id}</td>
-      <td className="px-4 py-3">
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" size="sm" onClick={() => onEdit(row)}>Edit</Button>
-          <Button variant="ghost" size="sm" onClick={() => onRemove(row)}>Hapus</Button>
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-function PelajaranCard({ row, onEdit, onRemove }) {
-  return (
-    <div className="rounded-xl border border-border-subtle bg-surface-card p-4 transition-shadow hover:shadow-md">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-text-primary">{row.mapel?.nama_mapel || '-'}</p>
-          <p className="mt-0.5 text-xs text-text-muted">
-            <JamLabel row={row} /> · Kelas {row.kelas_nama || row.kelas_id}
-          </p>
-        </div>
-        <span className="shrink-0 rounded-full bg-brand-100 px-2.5 py-1 text-[11px] font-medium text-brand-900">
-          <JamLabel row={row} />
-        </span>
-      </div>
-      <div className="mb-3 flex items-center gap-2">
-        <AvatarInitial name={row.guru?.name} />
-        <span className="text-sm text-text-muted">{row.guru?.name || '-'}</span>
-      </div>
-      <div className="flex gap-2">
-        <Button variant="secondary" size="sm" onClick={() => onEdit(row)} className="flex-1">Edit</Button>
-        <Button variant="ghost" size="sm" onClick={() => onRemove(row)} className="flex-1">Hapus</Button>
-      </div>
-    </div>
-  );
-}
 
 export default function JadwalPelajaranPage() {
   const toast = useToast();
@@ -155,19 +101,43 @@ export default function JadwalPelajaranPage() {
     [istirahat, activeHari]
   );
 
-  // Timeline gabungan: pelajaran + istirahat, terurut by jam_mulai
-  const timeline = useMemo(() => {
-    const items = rowsByHari.map((r) => ({ type: 'pelajaran', row: r, key: `p-${r.id}` }));
-    for (const ist of istirahatHari) {
-      items.push({ type: 'istirahat', row: ist, key: `i-${ist.id}` });
-    }
-    return items.sort((a, b) => {
-      const ta = a.row.jam_mulai || '';
-      const tb = b.row.jam_mulai || '';
+  // Timeline digrup by jam
+  const timelineGroups = useMemo(() => {
+    const groups = {};
+    
+    rowsByHari.forEach((r) => {
+      const key = `${r.jam_ke || ''}_${r.jam_mulai || ''}_${r.jam_selesai || ''}`;
+      if (!groups[key]) {
+        groups[key] = {
+          key,
+          jam_ke: r.jam_ke,
+          jam_mulai: r.jam_mulai,
+          jam_selesai: r.jam_selesai,
+          type: 'pelajaran',
+          items: []
+        };
+      }
+      groups[key].items.push(r);
+    });
+
+    istirahatHari.forEach((ist) => {
+      const key = `ist_${ist.id}`; // istirahat tak perlu digabung isinya
+      groups[key] = {
+        key,
+        jam_mulai: ist.jam_mulai,
+        jam_selesai: ist.jam_selesai,
+        type: 'istirahat',
+        items: [ist]
+      };
+    });
+
+    return Object.values(groups).sort((a, b) => {
+      const ta = a.jam_mulai || '';
+      const tb = b.jam_mulai || '';
       if (ta && tb) return ta.localeCompare(tb);
       if (ta) return -1;
       if (tb) return 1;
-      return (a.row.jam_ke ?? 99) - (b.row.jam_ke ?? 99);
+      return (a.jam_ke ?? 99) - (b.jam_ke ?? 99);
     });
   }, [rowsByHari, istirahatHari]);
 
@@ -470,7 +440,7 @@ export default function JadwalPelajaranPage() {
           </span>
         </div>
 
-        {timeline.length === 0 ? (
+        {timelineGroups.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-900">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -499,45 +469,108 @@ export default function JadwalPelajaranPage() {
                     <th className="px-4 py-3 text-right font-medium">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {timeline.map((item) =>
-                    item.type === 'istirahat' ? (
-                      <tr key={item.key} className="border-t border-border-subtle bg-brand-100/40">
-                        <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold text-brand-900">
-                          {item.row.jam_mulai}–{item.row.jam_selesai}
+                <tbody className="divide-y divide-border-subtle/50">
+                  {timelineGroups.map((group) => {
+                    if (group.type === 'istirahat') {
+                      return group.items.map(ist => (
+                        <tr key={`i-${ist.id}`} className="border-t-2 border-border-subtle bg-brand-100/40">
+                          <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold text-brand-900">
+                            {ist.jam_mulai?.substring(0,5)} – {ist.jam_selesai?.substring(0,5)}
+                          </td>
+                          <td className="px-4 py-3 font-medium text-brand-900" colSpan={3}>
+                            ☕ {ist.label || 'Istirahat'}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <Button variant="ghost" size="sm" onClick={() => removeIstirahat(ist)}>Hapus</Button>
+                          </td>
+                        </tr>
+                      ));
+                    }
+
+                    return group.items.map((row, index) => (
+                      <tr key={`p-${row.id}`} className={index === 0 ? "border-t-2 border-border-subtle" : ""}>
+                        {index === 0 && (
+                          <td className="whitespace-nowrap px-4 py-3 align-top font-medium text-text-primary" rowSpan={group.items.length}>
+                            <div className="flex flex-col">
+                              {group.jam_ke ? <span className="text-xs font-bold text-brand-900 mb-1 tracking-wide">JAM {group.jam_ke}</span> : null}
+                              {group.jam_mulai && group.jam_selesai ? <span className="text-xs text-text-muted">{group.jam_mulai.substring(0,5)} - {group.jam_selesai.substring(0,5)}</span> : (!group.jam_ke ? '-' : null)}
+                            </div>
+                          </td>
+                        )}
+                        <td className="px-4 py-3 text-text-primary">{row.mapel?.nama_mapel || '-'}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <AvatarInitial name={row.guru?.name} />
+                            <span className="text-text-muted">{row.guru?.name || '-'}</span>
+                          </div>
                         </td>
-                        <td className="px-4 py-3 font-medium text-brand-900" colSpan={4}>
-                          ☕ {item.row.label || 'Istirahat'}
+                        <td className="px-4 py-3 text-text-muted">{row.kelas_nama || row.kelas_id}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="secondary" size="sm" onClick={() => openEdit(row)}>Edit</Button>
+                            <Button variant="ghost" size="sm" onClick={() => remove(row)}>Hapus</Button>
+                          </div>
                         </td>
                       </tr>
-                    ) : (
-                      <PelajaranRow key={item.key} row={item.row} onEdit={openEdit} onRemove={remove} />
-                    )
-                  )}
+                    ));
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile: list card */}
-            <div className="space-y-3 md:hidden">
-              {timeline.map((item) =>
-                item.type === 'istirahat' ? (
-                  <div
-                    key={item.key}
-                    className="rounded-xl border border-dashed border-brand-500/40 bg-brand-100/40 p-4"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-brand-900">☕ {item.row.label || 'Istirahat'}</p>
-                        <p className="mt-0.5 text-xs text-brand-900/70">{item.row.jam_mulai}–{item.row.jam_selesai}</p>
+            <div className="space-y-4 md:hidden">
+              {timelineGroups.map((group) => {
+                if (group.type === 'istirahat') {
+                  return group.items.map(ist => (
+                    <div key={`i-${ist.id}`} className="rounded-xl border border-dashed border-brand-500/40 bg-brand-100/40 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-brand-900">☕ {ist.label || 'Istirahat'}</p>
+                          <p className="mt-0.5 text-xs text-brand-900/70">{ist.jam_mulai?.substring(0,5)} – {ist.jam_selesai?.substring(0,5)}</p>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => removeIstirahat(ist)}>Hapus</Button>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => removeIstirahat(item.row)}>Hapus</Button>
+                    </div>
+                  ));
+                }
+
+                return (
+                  <div key={group.key} className="rounded-xl border border-border-subtle bg-surface-card overflow-hidden shadow-sm">
+                    <div className="bg-surface px-4 py-2 border-b border-border-subtle flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {group.jam_ke && (
+                          <span className="rounded bg-brand-100 px-2 py-0.5 text-xs font-bold text-brand-900">JAM {group.jam_ke}</span>
+                        )}
+                        <span className="text-xs font-medium text-text-muted">
+                          {group.jam_mulai ? `${group.jam_mulai.substring(0,5)} - ${group.jam_selesai?.substring(0,5) || '?'}` : ''}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">{group.items.length} Kelas</span>
+                    </div>
+                    <div className="divide-y divide-border-subtle/50">
+                      {group.items.map(row => (
+                        <div key={`p-${row.id}`} className="p-4 transition-colors hover:bg-surface/50">
+                          <div className="mb-3 flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-text-primary">{row.mapel?.nama_mapel || '-'}</p>
+                              <p className="mt-0.5 text-xs text-text-muted">Kelas {row.kelas_nama || row.kelas_id}</p>
+                            </div>
+                          </div>
+                          <div className="mb-3 flex items-center gap-2">
+                            <AvatarInitial name={row.guru?.name} />
+                            <span className="text-sm text-text-muted">{row.guru?.name || '-'}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="secondary" size="sm" onClick={() => openEdit(row)} className="flex-1">Edit</Button>
+                            <Button variant="ghost" size="sm" onClick={() => remove(row)} className="flex-1">Hapus</Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ) : (
-                  <PelajaranCard key={item.key} row={item.row} onEdit={openEdit} onRemove={remove} />
-                )
-              )}
+                );
+              })}
             </div>
           </>
         )}
