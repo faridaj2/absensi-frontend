@@ -3,21 +3,13 @@ import { listAssignment, listJadwal, listJamIstirahat } from '../../services/mas
 import { extractError } from '../../services/apiClient';
 import './jadwalPelajaranCetak.css';
 
+const PAPER = { size: 'A4', orientation: 'landscape', margin: '8mm' };
 const HARI = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
 const PALETTE = [
-  { bg: '#dbeafe', bd: '#3b82f6', tx: '#1e3a8a' },
-  { bg: '#dcfce7', bd: '#22c55e', tx: '#14532d' },
-  { bg: '#fee2e2', bd: '#ef4444', tx: '#7f1d1d' },
-  { bg: '#fef3c7', bd: '#f59e0b', tx: '#78350f' },
-  { bg: '#ede9fe', bd: '#8b5cf6', tx: '#4c1d95' },
-  { bg: '#cffafe', bd: '#06b6d4', tx: '#164e63' },
-  { bg: '#fce7f3', bd: '#ec4899', tx: '#831843' },
-  { bg: '#e0e7ff', bd: '#6366f1', tx: '#312e81' },
-  { bg: '#ecfccb', bd: '#84cc16', tx: '#365314' },
-  { bg: '#ffedd5', bd: '#f97316', tx: '#7c2d12' },
-  { bg: '#d1fae5', bd: '#10b981', tx: '#064e3b' },
-  { bg: '#fae8ff', bd: '#d946ef', tx: '#701a75' },
+  { bd: '#3b82f6' }, { bd: '#22c55e' }, { bd: '#ef4444' }, { bd: '#f59e0b' },
+  { bd: '#8b5cf6' }, { bd: '#06b6d4' }, { bd: '#ec4899' }, { bd: '#6366f1' },
+  { bd: '#84cc16' }, { bd: '#f97316' }, { bd: '#10b981' }, { bd: '#d946ef' },
 ];
 
 function hashToPalette(id) {
@@ -25,36 +17,238 @@ function hashToPalette(id) {
   return PALETTE[Math.abs(n) % PALETTE.length];
 }
 
-function jamKey(r) {
-  if (r.jam_ke != null) return `k${String(r.jam_ke).padStart(3, '0')}`;
-  if (r.jam_mulai) return `t${r.jam_mulai}`;
-  return 'zzz';
+// --- 1. Helper Normalisasi Baris Waktu ---
+function normalizeTimeRows(assignments, istirahatList) {
+  const warnings = [];
+  const allItems = [
+    ...assignments.map(a => ({ ...a, _type: 'pelajaran' })),
+    ...istirahatList.map(i => ({ ...i, _type: 'istirahat' }))
+  ];
+
+  const rowGroups = new Map();
+
+  for (const item of allItems) {
+    const timeRange = (item.jam_mulai && item.jam_selesai) 
+      ? `${String(item.jam_mulai).slice(0,5)}-${String(item.jam_selesai).slice(0,5)}` 
+      : (item.jam_mulai ? String(item.jam_mulai).slice(0,5) : 'unknown');
+    
+    if (timeRange === 'unknown') {
+      warnings.push(`Slot tanpa waktu: Kelas ${item.kelas_nama || '-'} Hari ${item.hari}`);
+    }
+
+    const rowKey = `${timeRange}|${item.jam_ke || 'null'}|${item._type}`;
+    
+    if (!rowGroups.has(rowKey)) {
+      rowGroups.set(rowKey, {
+        rowKey,
+        timeRange,
+        jam_ke: item.jam_ke,
+        jam_mulai: item.jam_mulai,
+        jam_selesai: item.jam_selesai,
+        type: item._type,
+        label: item.label,
+        items: []
+      });
+    }
+    rowGroups.get(rowKey).items.push(item);
+  }
+
+  // Deteksi anomali: jam duplikat beda jam_ke
+  const timeRangeCounts = new Map();
+  for (const [key, group] of rowGroups.entries()) {
+    if (!timeRangeCounts.has(group.timeRange)) timeRangeCounts.set(group.timeRange, []);
+    timeRangeCounts.get(group.timeRange).push(group);
+  }
+  for (const [tr, groups] of timeRangeCounts.entries()) {
+    if (groups.length > 1 && tr !== 'unknown') {
+      warnings.push(`Label waktu duplikat beda slot (Jam ke-N berbeda): ${tr} (Muncul ${groups.length}x)`);
+    }
+  }
+
+  const normalizedRows = [];
+  for (const group of rowGroups.values()) {
+    const cellMap = new Map();
+    let hasItems = false;
+
+    for (const item of group.items) {
+      if (!cellMap.has(item.hari)) cellMap.set(item.hari, []);
+      const dayCards = cellMap.get(item.hari);
+      
+      const guruId = item.guru?.id ?? item.guru_id;
+      const cardKey = item._type === 'istirahat' 
+        ? `ist-${item.label}`
+        : `${item.kelas_id || item.kelas_nama}-${item.mapel?.id || item.mapel?.nama_mapel}-${guruId}`;
+      
+      if (!dayCards.find(c => c._cardKey === cardKey)) {
+        dayCards.push({ ...item, _cardKey: cardKey });
+        hasItems = true;
+      }
+    }
+
+    if (hasItems || group.type === 'istirahat') {
+      normalizedRows.push({ ...group, cells: cellMap });
+    }
+  }
+
+  normalizedRows.sort((a, b) => {
+    if (a.jam_mulai && b.jam_mulai) return a.jam_mulai.localeCompare(b.jam_mulai);
+    if (a.jam_ke != null && b.jam_ke != null) return a.jam_ke - b.jam_ke;
+    return 0;
+  });
+
+  return { rows: normalizedRows, warnings };
 }
 
-function jamLabel(r) {
-  if (r.jam_mulai && r.jam_selesai) {
-    return `${String(r.jam_mulai).slice(0, 5)}–${String(r.jam_selesai).slice(0, 5)}`;
-  }
-  if (r.jam_ke != null) return `Jam ke-${r.jam_ke}`;
-  return '-';
+// --- Hook Penskalaan Cetak ---
+function usePrintFit() {
+  useEffect(() => {
+    const handleBefore = () => {
+      const sheet = document.querySelector('.jp-sheet');
+      if (!sheet) return;
+      const contentHeight = sheet.scrollHeight;
+      const targetHeight = 720; // Estimasi aman tinggi 1 kertas A4 landscape
+      if (contentHeight > targetHeight) {
+        let scale = targetHeight / contentHeight;
+        if (scale < 0.6) {
+           scale = 0.6;
+           const warn = document.getElementById('jp-print-warn');
+           if (warn) warn.style.display = 'block';
+        }
+        sheet.style.transform = `scale(${scale})`;
+        sheet.style.transformOrigin = 'top left';
+        sheet.style.width = `${100 / scale}%`;
+      }
+    };
+    const handleAfter = () => {
+      const sheet = document.querySelector('.jp-sheet');
+      if (sheet) {
+         sheet.style.transform = '';
+         sheet.style.width = '';
+      }
+      const warn = document.getElementById('jp-print-warn');
+      if (warn) warn.style.display = 'none';
+    };
+    window.addEventListener('beforeprint', handleBefore);
+    window.addEventListener('afterprint', handleAfter);
+    return () => {
+      window.removeEventListener('beforeprint', handleBefore);
+      window.removeEventListener('afterprint', handleAfter);
+    };
+  }, []);
 }
+
+// --- Komponen Presentasional ---
+
+function LessonCard({ item, colIdx }) {
+  const p = hashToPalette(item.guru?.id ?? item.guru_id);
+  const clsName = String(item.kelas_nama || item.kelas_id);
+  const badgeStr = clsName.replace(/\s*(SMK|SMP|SMA)\s*/i, '');
+  
+  return (
+    <div
+      className="jp-card"
+      style={{ '--accent': p.bd, gridColumn: colIdx > 0 ? colIdx : 'auto' }}
+    >
+      <div className="jp-card-mapel-wrap">
+        <span className="jp-card-kelas-badge">{badgeStr}</span>
+        <span className="jp-card-mapel">{item.mapel?.nama_mapel || '-'}</span>
+      </div>
+      <div className="jp-card-guru" title={item.guru?.name || '-'}>
+        {item.guru?.name || '-'}
+      </div>
+    </div>
+  );
+}
+
+function ScheduleCell({ items, classList }) {
+  if (!items || items.length === 0) return <td className="jp-td-cell empty" />;
+  return (
+    <td className="jp-td-cell">
+      <div className="jp-cell-stack" style={{ gridTemplateColumns: `repeat(${classList.length}, minmax(0, 1fr))` }}>
+        {items.map((item) => {
+          if (item._type === 'istirahat') {
+            return (
+              <div key={`ist-${item.id}`} className="jp-card-istirahat">
+                {item.label || 'Istirahat'}
+              </div>
+            );
+          }
+          const clsName = String(item.kelas_nama || item.kelas_id);
+          const colIdx = classList.indexOf(clsName) + 1;
+          return <LessonCard key={item._cardKey} item={item} colIdx={colIdx} />;
+        })}
+      </div>
+    </td>
+  );
+}
+
+function ScheduleTable({ normalizedRows, activeDays, classList }) {
+  return (
+    <table className="jp-tbl">
+      <thead>
+        <tr>
+          <th className="jp-th-jam">Waktu</th>
+          {activeDays.map((h) => (
+            <th key={h} className="jp-th-hari">{HARI[h]}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {normalizedRows.map((r) => {
+          const lblUtama = r.jam_ke != null ? `Jam ke-${r.jam_ke}` : (r.timeRange !== 'unknown' ? r.timeRange : '-');
+          const lblSub = r.timeRange !== 'unknown' && lblUtama !== r.timeRange ? r.timeRange : null;
+          return (
+            <tr key={r.rowKey}>
+              <td className="jp-td-jam">
+                <div className="jp-jam-label">{lblUtama}</div>
+                {lblSub && <div className="jp-jam-sub">{lblSub}</div>}
+              </td>
+              {activeDays.map((h) => (
+                <ScheduleCell key={`${r.rowKey}-${h}`} items={r.cells.get(h)} classList={classList} />
+              ))}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+function TeacherLegend({ guruList }) {
+  return (
+    <div className="jp-legend">
+      <div className="jp-legend-title">Guru Pengajar:</div>
+      {guruList.map((g) => {
+        const p = hashToPalette(g.id);
+        return (
+          <div key={g.id} className="jp-legend-item">
+            <span className="jp-legend-swatch" style={{ backgroundColor: p.bd }} />
+            <span>{g.nama}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// --- Komponen Halaman Utama ---
 
 export default function JadwalPelajaranCetakPage() {
   const [rows, setRows] = useState([]);
-  const [jadwal, setJadwal] = useState([]);
   const [istirahat, setIstirahat] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  usePrintFit();
 
   useEffect(() => {
     let alive = true;
     async function run() {
       setLoading(true);
       try {
-        const [a, j, ist] = await Promise.all([listAssignment(), listJadwal(), listJamIstirahat()]);
+        const [a, , ist] = await Promise.all([listAssignment(), listJadwal(), listJamIstirahat()]);
         if (!alive) return;
         setRows(a || []);
-        setJadwal(j || []);
         setIstirahat(ist || []);
       } catch (err) {
         if (alive) setError(extractError(err));
@@ -66,72 +260,23 @@ export default function JadwalPelajaranCetakPage() {
     return () => { alive = false; };
   }, []);
 
-  useEffect(() => {
-    if (loading || error) return;
-    const t = setTimeout(() => window.print(), 600);
-    return () => clearTimeout(t);
-  }, [loading, error]);
-
-  const hariList = useMemo(() => {
-    const set = new Set(rows.map((r) => r.hari));
-    const fromJadwal = jadwal.map((j) => j.hari);
-    const fromIstirahat = istirahat.map((ist) => ist.hari);
-    const all = [...new Set([...set, ...fromJadwal, ...fromIstirahat])].filter(Boolean).sort((a, b) => a - b);
-    return all.length > 0 ? all : [1, 2, 3, 4, 5, 6];
-  }, [rows, jadwal, istirahat]);
-
-  const jamList = useMemo(() => {
-    const map = new Map();
-    for (const r of rows) {
-      const k = jamKey(r);
-      if (!map.has(k)) {
-        map.set(k, {
-          key: k,
-          jam_ke: r.jam_ke,
-          jam_mulai: r.jam_mulai,
-          jam_selesai: r.jam_selesai,
-          type: 'pelajaran'
-        });
-      }
-    }
-    for (const ist of istirahat) {
-      const k = `t${ist.jam_mulai}`;
-      if (!map.has(k)) {
-        map.set(k, {
-          key: k,
-          jam_ke: null,
-          jam_mulai: ist.jam_mulai,
-          jam_selesai: ist.jam_selesai,
-          type: 'istirahat',
-          label: ist.label || 'Istirahat',
-        });
-      }
-    }
-    return Array.from(map.values()).sort((a, b) => {
-      if (a.jam_mulai && b.jam_mulai) {
-        return a.jam_mulai.localeCompare(b.jam_mulai);
-      }
-      if (a.jam_ke != null && b.jam_ke != null) {
-        return a.jam_ke - b.jam_ke;
-      }
-      return a.key.localeCompare(b.key);
-    });
+  const { rows: normalizedRows, warnings } = useMemo(() => {
+    return normalizeTimeRows(rows, istirahat);
   }, [rows, istirahat]);
 
-  const cellMap = useMemo(() => {
-    const map = new Map();
-    for (const r of rows) {
-      const key = `${r.hari}|${jamKey(r)}`;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key).push({ ...r, _type: 'pelajaran' });
+  const activeDays = useMemo(() => {
+    const days = new Set();
+    for (const r of normalizedRows) {
+      for (const d of r.cells.keys()) days.add(d);
     }
-    for (const ist of istirahat) {
-      const key = `${ist.hari}|t${ist.jam_mulai}`;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key).push({ ...ist, _type: 'istirahat' });
-    }
-    return map;
-  }, [rows, istirahat]);
+    const list = HARI.map((_, i) => i).filter(h => days.has(h)).sort((a, b) => a - b);
+    return list.length > 0 ? list : [1, 2, 3, 4, 5];
+  }, [normalizedRows]);
+
+  const classList = useMemo(() => {
+    const set = new Set(rows.map(r => String(r.kelas_nama || r.kelas_id)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+  }, [rows]);
 
   const guruList = useMemo(() => {
     const map = new Map();
@@ -147,6 +292,10 @@ export default function JadwalPelajaranCetakPage() {
     day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 
+  if (warnings.length > 0) {
+    warnings.forEach(w => console.warn("Data Warning:", w));
+  }
+
   return (
     <div className="jp-cetak-root">
       <div className="jp-toolbar no-print">
@@ -154,97 +303,40 @@ export default function JadwalPelajaranCetakPage() {
         <button type="button" onClick={() => window.close()}>Tutup</button>
       </div>
 
+      {warnings.length > 0 && (
+        <div className="jp-warnings no-print">
+          <strong>Peringatan Data Anomali (disembunyikan saat dicetak):</strong>
+          <ul className="list-disc pl-5 mt-1">
+            {warnings.map((w, i) => <li key={i}>{w}</li>)}
+          </ul>
+        </div>
+      )}
+
+      <div id="jp-print-warn" className="jp-warnings no-print" style={{ display: 'none' }}>
+        Jadwal terlalu padat. Skala sudah ditekan maksimal (60%). Mungkin akan ada yang terpotong.
+      </div>
+
       <div className="jp-sheet">
         <div className="jp-title">
-          <h1>JADWAL PELAJARAN</h1>
-          <p>Matriks Hari × Jam · Kode warna per guru</p>
+          <h1>Jadwal Pelajaran</h1>
+          <p>Daftar Pelajaran dan Guru Pengajar</p>
         </div>
 
         {loading ? (
           <div className="jp-empty">Memuat data...</div>
         ) : error ? (
           <div className="jp-empty">Gagal memuat: {error}</div>
-        ) : rows.length === 0 ? (
+        ) : normalizedRows.length === 0 ? (
           <div className="jp-empty">Belum ada jadwal pelajaran.</div>
         ) : (
           <>
-            <div className="jp-wrap">
-              <table className="jp-tbl">
-                <thead>
-                  <tr>
-                    <th className="jp-th-jam">Jam</th>
-                    {hariList.map((h) => (
-                      <th key={h} className="jp-th-hari">{HARI[h] || `Hari ${h}`}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {jamList.map((j) => (
-                    <tr key={j.key}>
-                      <td className="jp-td-jam">
-                        <div className="jp-jam-label">{jamLabel(j)}</div>
-                        {j.jam_ke != null && j.jam_mulai && (
-                          <div className="jp-jam-sub">{String(j.jam_mulai).slice(0, 5)}–{String(j.jam_selesai || '').slice(0, 5)}</div>
-                        )}
-                      </td>
-                      {hariList.map((h) => {
-                        const items = cellMap.get(`${h}|${j.key}`) || [];
-                        return (
-                          <td key={h} className="jp-td-cell">
-                            {items.length === 0 ? (
-                              <span className="jp-kosong">–</span>
-                            ) : (
-                              <div className="jp-cell-stack">
-                                {items.map((r) => {
-                                  if (r._type === 'istirahat') {
-                                    return (
-                                      <div key={`ist-${r.id}`} className="jp-card jp-card-istirahat" style={{ background: '#f3f4f6', borderColor: '#e5e7eb', color: '#4b5563', padding: '0.5rem', textAlign: 'center', fontWeight: '500' }}>
-                                        ☕ {r.label || 'Istirahat'}
-                                      </div>
-                                    );
-                                  }
-                                  const p = hashToPalette(r.guru?.id ?? r.guru_id);
-                                  return (
-                                    <div
-                                      key={r.id}
-                                      className="jp-card"
-                                      style={{ background: p.bg, borderColor: p.bd, color: p.tx }}
-                                    >
-                                      <div className="jp-card-mapel">{r.mapel?.nama_mapel || '-'}</div>
-                                      <div className="jp-card-kelas">Kelas {r.kelas_nama || r.kelas_id || '-'}</div>
-                                      <div className="jp-card-guru">{r.guru?.name || '-'}</div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="jp-legend">
-              <div className="jp-legend-title">Keterangan Warna Guru:</div>
-              <div className="jp-legend-grid">
-                {guruList.map((g) => {
-                  const p = hashToPalette(g.id);
-                  return (
-                    <div key={g.id} className="jp-legend-item">
-                      <span className="jp-legend-swatch" style={{ background: p.bg, borderColor: p.bd }} />
-                      <span>{g.nama}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="jp-footer">
-              <span>Dicetak: {dicetakPada}</span>
-            </div>
+            <ScheduleTable 
+              normalizedRows={normalizedRows} 
+              activeDays={activeDays} 
+              classList={classList} 
+            />
+            <TeacherLegend guruList={guruList} />
+            <div className="jp-footer">Dicetak: {dicetakPada}</div>
           </>
         )}
       </div>
