@@ -195,7 +195,7 @@ export default function AbsenPage() {
                 </Button>
 
                 <Modal 
-                  isOpen={isOtpModalOpen} 
+                  open={isOtpModalOpen} 
                   onClose={() => setIsOtpModalOpen(false)} 
                   title={`Konfirmasi Absen ${jenis === 'masuk' ? 'Masuk' : 'Pulang'}`}
                 >
