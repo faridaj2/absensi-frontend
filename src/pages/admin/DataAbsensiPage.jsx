@@ -65,6 +65,7 @@ export default function DataAbsensiPage() {
                 <th className="px-4 py-3 font-medium">Jenis</th>
                 <th className="px-4 py-3 font-medium">Waktu</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Keterangan</th>
                 <th className="px-4 py-3 font-medium">Jarak</th>
                 <th className="px-4 py-3 font-medium text-right">Aksi</th>
               </tr>
@@ -72,11 +73,11 @@ export default function DataAbsensiPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-text-muted">Memuat data...</td>
+                  <td colSpan={7} className="px-4 py-8 text-center text-text-muted">Memuat data...</td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-text-muted">Tidak ada data absensi pada tanggal ini.</td>
+                  <td colSpan={7} className="px-4 py-8 text-center text-text-muted">Tidak ada data absensi pada tanggal ini.</td>
                 </tr>
               ) : (
                 data.map((item) => (
@@ -96,6 +97,7 @@ export default function DataAbsensiPage() {
                         '-'
                       )}
                     </td>
+                    <td className="px-4 py-3 text-text-primary capitalize font-medium">{item.keterangan || '-'}</td>
                     <td className="px-4 py-3 text-text-muted">{item.jarak_meter ? `${item.jarak_meter}m` : '-'}</td>
                     <td className="px-4 py-3 text-right">
                       <Button variant="danger" size="sm" onClick={() => handleDelete(item.id)}>
