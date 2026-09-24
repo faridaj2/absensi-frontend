@@ -3,8 +3,7 @@ import { PageHeader, Card } from '../../components/ui';
 import { extractError } from '../../services/apiClient';
 import { useToast } from '../../contexts/ToastContext';
 
-// Nanti import fungsi API Anda di sini jika backend sudah siap
-// import { getJadwalSaya } from '../../services/guruService'; 
+import { getJadwalSaya } from '../../services/absensiService';
 
 export default function JamMengajarPage() {
   const toast = useToast();
@@ -15,39 +14,9 @@ export default function JamMengajarPage() {
     async function load() {
       try {
         setLoading(true);
-        // TODO: Ganti dengan pemanggilan API ke backend.
-        // const res = await getJadwalSaya();
-        // setData(res.data);
-        
-        // --- DATA DUMMY (Hapus bagian ini jika API sudah jalan) ---
-        setTimeout(() => {
-          setData([
-            {
-              hari: 'Senin',
-              jadwal: [
-                { jam_ke: 1, waktu: '07:00 - 07:45', kelas: 'X RPL 1', mapel: 'Pemrograman Web' },
-                { jam_ke: 2, waktu: '07:45 - 08:30', kelas: 'X RPL 1', mapel: 'Pemrograman Web' },
-              ]
-            },
-            {
-              hari: 'Selasa',
-              jadwal: [] // Kosong jika tidak ada jam
-            },
-            {
-              hari: 'Rabu',
-              jadwal: [
-                { jam_ke: 4, waktu: '09:30 - 10:15', kelas: 'XI TKJ 2', mapel: 'Basis Data' },
-                { jam_ke: 5, waktu: '10:15 - 11:00', kelas: 'XI TKJ 2', mapel: 'Basis Data' },
-              ]
-            },
-            { hari: 'Kamis', jadwal: [] },
-            { hari: 'Jumat', jadwal: [] },
-            { hari: 'Sabtu', jadwal: [] },
-          ]);
-          setLoading(false);
-        }, 500);
-        // -----------------------------------------------------------
-
+        const res = await getJadwalSaya();
+        setData(res.data);
+        setLoading(false);
       } catch (err) {
         toast.error(extractError(err));
         setLoading(false);

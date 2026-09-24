@@ -41,3 +41,8 @@ export async function claimSlot(slotId) {
   const { data } = await apiClient.post(`/absensi-siswa/${slotId}/claim`);
   return data;
 }
+
+export async function getJadwalSaya() {
+  const { data } = await apiClient.get('/jadwal-mengajar');
+  return data;
+}
