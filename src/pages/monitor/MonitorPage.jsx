@@ -52,9 +52,93 @@ function PegawaiRow({ p }) {
   );
 }
 
+const EXCEPTIONS = ['S.Pd', 'M.Pd', 'A.Md', 'SMK', 'SMP', 'SMA', 'GIM', 'TIK', 'NU', 'IPA', 'IPS', 'SD'];
+const toTitleCase = (str = '') =>
+  str
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .split(' ')
+    .map((word) => {
+      const upper = word.toUpperCase();
+      return EXCEPTIONS.includes(upper) ? upper : word;
+    })
+    .join(' ');
+
+function SlotRow({ s, isContinuation, isGroupStart }) {
+  const mapelTitle = toTitleCase(s.mapel || '-');
+  // TODO: Evaluasi jam terlewat (jika ada s.jam_mulai / s.jam_selesai dan terlewat)
+  // Saat ini diasumsikan belum terlewat
+  const isTerlewat = false; 
+
+  let statusColor = '';
+  let statusText = '';
+  let accentColor = '';
+
+  if (s.terabsen) {
+    statusColor = 'text-status-success-text font-medium';
+    statusText = `${s.jumlah_siswa} siswa`;
+    accentColor = 'border-l-status-success-text';
+  } else if (isTerlewat) {
+    statusColor = 'text-red-400 font-medium';
+    statusText = 'Belum';
+    accentColor = 'border-l-red-400';
+  } else {
+    statusColor = 'text-gray-400';
+    statusText = 'Belum';
+    accentColor = 'border-l-gray-300';
+  }
+
+  return (
+    <li 
+      className={`flex items-center gap-3 bg-white px-2.5 py-2 ${isGroupStart ? 'mt-1 border-t border-gray-100' : ''} border-l-[3px] ${accentColor}`}
+      aria-label={`Jam ${s.jam_ke}, ${mapelTitle}, ${statusText}`}
+    >
+      {/* Kotak Jam */}
+      <div className={`shrink-0 flex h-7 w-7 items-center justify-center rounded-md text-xs font-semibold ${s.terabsen ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+        {s.jam_ke}
+      </div>
+
+      {/* Info Mapel & Guru */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center" style={{ minHeight: '36px' }}>
+        <div 
+          className={`truncate text-sm font-medium ${isContinuation ? 'text-gray-400 opacity-90' : 'text-gray-900'}`}
+          title={mapelTitle}
+        >
+          {mapelTitle}
+        </div>
+        {!isContinuation && (
+          <div className="flex items-center truncate">
+            <span className="truncate text-xs text-gray-500" title={s.guru_nama}>
+              {toTitleCase(s.guru_nama || '-')}
+            </span>
+            {s.sebagai_pengganti && (
+              <span className="ml-1.5 shrink-0 rounded-full bg-amber-100 px-1.5 py-[1px] text-[10px] font-medium text-amber-700">
+                Pengganti
+              </span>
+            )}
+          </div>
+        )}
+        {isContinuation && (
+          <div className="truncate text-xs text-gray-400 italic">lanjutan</div>
+        )}
+      </div>
+
+      {/* Status Kanan */}
+      <div className={`shrink-0 text-right text-xs tabular-nums ${statusColor} flex items-center justify-end gap-1.5`}>
+        {s.terabsen && <span className="h-1.5 w-1.5 rounded-full bg-status-success-text"></span>}
+        {statusText}
+      </div>
+    </li>
+  );
+}
+
 function KelasCard({ k }) {
-  const allDone = k.slot_terabsen === k.total_slot && k.total_slot > 0;
-  const noneDone = k.slot_terabsen === 0;
+  const total = k.total_slot || 0;
+  const current = k.slot_terabsen || 0;
+  const allDone = current === total && total > 0;
+  const noneDone = current === 0;
+  const percentage = total > 0 ? (current / total) * 100 : 0;
+
   const badge = allDone
     ? { cls: 'bg-status-success-bg text-status-success-text ring-status-success-text/20', label: 'Lengkap' }
     : noneDone
@@ -62,50 +146,36 @@ function KelasCard({ k }) {
     : { cls: 'bg-status-warning-bg text-status-warning-text ring-status-warning-text/20', label: 'Sebagian' };
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface-card p-4">
+    <div className="rounded-xl border border-border-subtle bg-surface-card p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold text-text-primary">{k.kelas_nama}</p>
+          <p className="text-sm font-bold text-text-primary">{k.kelas_nama}</p>
           <p className="text-[11px] text-text-muted">
-            {k.slot_terabsen} / {k.total_slot} slot terabsen
+            {current} / {total} slot terabsen
           </p>
         </div>
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${badge.cls}`}>
           {badge.label}
         </span>
       </div>
-      <div className="space-y-1.5">
+      
+      {/* Progress Bar Tipis */}
+      <div className="mb-4 h-1 w-full overflow-hidden rounded-full bg-gray-200">
+        <div className="h-full bg-status-success-text transition-all duration-300" style={{ width: `${percentage}%` }} />
+      </div>
+
+      <ul className="flex flex-col gap-[2px]">
         {k.slot.length === 0 ? (
           <p className="text-xs italic text-text-muted">Tidak ada slot hari ini.</p>
         ) : (
-          k.slot.map((s) => (
-            <div
-              key={s.id}
-              className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-xs ${
-                s.terabsen ? 'bg-status-success-bg/50' : 'bg-status-danger-bg/50'
-              }`}
-            >
-              <div className="min-w-0">
-                <span className="font-semibold text-text-primary">Jam {s.jam_ke}</span>
-                <span className="text-text-muted"> · {s.mapel || '-'}</span>
-                <span className="text-text-muted"> · {s.guru_nama || '-'}</span>
-                {s.sebagai_pengganti && (
-                  <span className="ml-1 rounded-full bg-status-warning-bg px-1.5 py-0.5 text-[9px] font-medium text-status-warning-text ring-1 ring-status-warning-text/20">
-                    Pengganti
-                  </span>
-                )}
-              </div>
-              <div className="shrink-0 text-right">
-                {s.terabsen ? (
-                  <span className="font-semibold text-status-success-text">{s.jumlah_siswa} siswa</span>
-                ) : (
-                  <span className="text-status-danger-text">belum</span>
-                )}
-              </div>
-            </div>
-          ))
+          k.slot.map((s, index) => {
+            const prev = k.slot[index - 1];
+            const isContinuation = prev && prev.mapel === s.mapel && prev.guru_nama === s.guru_nama;
+            const isGroupStart = index > 0 && !isContinuation;
+            return <SlotRow key={s.id} s={s} isContinuation={isContinuation} isGroupStart={isGroupStart} />;
+          })
         )}
-      </div>
+      </ul>
     </div>
   );
 }
