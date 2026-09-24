@@ -3,7 +3,6 @@ import { listAssignment, listJadwal, listJamIstirahat } from '../../services/mas
 import { extractError } from '../../services/apiClient';
 import './jadwalPelajaranCetak.css';
 
-const PAPER = { size: 'A4', orientation: 'landscape', margin: '8mm' };
 const HARI = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
 const PALETTE = [
@@ -25,26 +24,52 @@ function normalizeTimeRows(assignments, istirahatList) {
     ...istirahatList.map(i => ({ ...i, _type: 'istirahat' }))
   ];
 
+  // 1. Bangun peta rentangWaktu -> nomorJam
+  const timeToJamKe = new Map();
+  for (const item of allItems) {
+    if (item._type === 'pelajaran' && item.jam_ke != null) {
+      const timeRange = (item.jam_mulai && item.jam_selesai)
+        ? `${String(item.jam_mulai).slice(0,5)}-${String(item.jam_selesai).slice(0,5)}`
+        : null;
+      if (timeRange && !timeToJamKe.has(timeRange)) {
+        timeToJamKe.set(timeRange, item.jam_ke);
+      }
+    }
+  }
+
   const rowGroups = new Map();
 
+  // 2 & 3. Pemetaan dan Penggabungan Baris
   for (const item of allItems) {
-    const timeRange = (item.jam_mulai && item.jam_selesai) 
-      ? `${String(item.jam_mulai).slice(0,5)}-${String(item.jam_selesai).slice(0,5)}` 
+    let finalJamKe = item.jam_ke;
+    const timeRange = (item.jam_mulai && item.jam_selesai)
+      ? `${String(item.jam_mulai).slice(0,5)}-${String(item.jam_selesai).slice(0,5)}`
       : (item.jam_mulai ? String(item.jam_mulai).slice(0,5) : 'unknown');
-    
-    if (timeRange === 'unknown') {
-      warnings.push(`Slot tanpa waktu: Kelas ${item.kelas_nama || '-'} Hari ${item.hari}`);
+
+    if (item._type === 'pelajaran') {
+      // Petakan baris tanpa nomor jam ke nomor jam via rentang waktu
+      if (finalJamKe == null && timeRange !== 'unknown' && timeToJamKe.has(timeRange)) {
+        finalJamKe = timeToJamKe.get(timeRange);
+      }
+      // Jika bertentangan, nomor jam menang
+      if (item.jam_ke != null && timeRange !== 'unknown' && timeToJamKe.has(timeRange)) {
+        const mappedJam = timeToJamKe.get(timeRange);
+        if (mappedJam !== item.jam_ke) {
+          warnings.push(`Anomali label waktu: Waktu '${timeRange}' mayoritas tercatat di Jam ke-${mappedJam} tapi record ini diatur ke Jam ke-${item.jam_ke} (Mapel: ${item.mapel?.nama_mapel}). Mempertahankan Jam ke-${item.jam_ke}.`);
+        }
+      }
     }
 
-    const rowKey = `${timeRange}|${item.jam_ke || 'null'}|${item._type}`;
-    
+    const rowKey = item._type === 'istirahat'
+      ? `ist-${item.jam_mulai || item.label}`
+      : (finalJamKe != null ? `jam-${finalJamKe}` : `unmapped-${timeRange}`);
+
     if (!rowGroups.has(rowKey)) {
       rowGroups.set(rowKey, {
         rowKey,
-        timeRange,
-        jam_ke: item.jam_ke,
+        jam_ke: finalJamKe,
         jam_mulai: item.jam_mulai,
-        jam_selesai: item.jam_selesai,
+        timeRange,
         type: item._type,
         label: item.label,
         items: []
@@ -53,18 +78,7 @@ function normalizeTimeRows(assignments, istirahatList) {
     rowGroups.get(rowKey).items.push(item);
   }
 
-  // Deteksi anomali: jam duplikat beda jam_ke
-  const timeRangeCounts = new Map();
-  for (const [key, group] of rowGroups.entries()) {
-    if (!timeRangeCounts.has(group.timeRange)) timeRangeCounts.set(group.timeRange, []);
-    timeRangeCounts.get(group.timeRange).push(group);
-  }
-  for (const [tr, groups] of timeRangeCounts.entries()) {
-    if (groups.length > 1 && tr !== 'unknown') {
-      warnings.push(`Label waktu duplikat beda slot (Jam ke-N berbeda): ${tr} (Muncul ${groups.length}x)`);
-    }
-  }
-
+  // 5 & 6. Gabung sel dan tangani konflik
   const normalizedRows = [];
   for (const group of rowGroups.values()) {
     const cellMap = new Map();
@@ -73,26 +87,39 @@ function normalizeTimeRows(assignments, istirahatList) {
     for (const item of group.items) {
       if (!cellMap.has(item.hari)) cellMap.set(item.hari, []);
       const dayCards = cellMap.get(item.hari);
-      
+
+      const clsName = String(item.kelas_nama || item.kelas_id);
       const guruId = item.guru?.id ?? item.guru_id;
-      const cardKey = item._type === 'istirahat' 
+      const cardKey = item._type === 'istirahat'
         ? `ist-${item.label}`
-        : `${item.kelas_id || item.kelas_nama}-${item.mapel?.id || item.mapel?.nama_mapel}-${guruId}`;
-      
-      if (!dayCards.find(c => c._cardKey === cardKey)) {
+        : `${clsName}-${item.mapel?.id || item.mapel?.nama_mapel}-${guruId}`;
+
+      const exactDup = dayCards.find(c => c._cardKey === cardKey);
+      if (!exactDup) {
+        // Cek konflik: 2 mapel berbeda di (Hari + Jam + Kelas) yang sama
+        if (item._type === 'pelajaran') {
+          const conflict = dayCards.find(c => c._type === 'pelajaran' && String(c.kelas_nama || c.kelas_id) === clsName);
+          if (conflict) {
+            warnings.push(`Konflik jadwal: Hari ${HARI[item.hari]} Jam ke-${group.jam_ke || group.timeRange} Kelas ${clsName} menumpuk 2 pelajaran berbeda ('${conflict.mapel?.nama_mapel}' dan '${item.mapel?.nama_mapel}'). Kartu akan ditampilkan bertumpuk.`);
+          }
+        }
         dayCards.push({ ...item, _cardKey: cardKey });
         hasItems = true;
       }
     }
 
     if (hasItems || group.type === 'istirahat') {
+      // 7. Catat yang gagal terpetakan ke jam ke-N
+      if (group.type === 'pelajaran' && group.jam_ke == null) {
+        warnings.push(`Baris tanpa nomor jam: Slot dengan rentang waktu '${group.timeRange}' gagal dipetakan ke nomor jam.`);
+      }
       normalizedRows.push({ ...group, cells: cellMap });
     }
   }
 
   normalizedRows.sort((a, b) => {
-    if (a.jam_mulai && b.jam_mulai) return a.jam_mulai.localeCompare(b.jam_mulai);
     if (a.jam_ke != null && b.jam_ke != null) return a.jam_ke - b.jam_ke;
+    if (a.jam_mulai && b.jam_mulai) return a.jam_mulai.localeCompare(b.jam_mulai);
     return 0;
   });
 
@@ -106,7 +133,7 @@ function usePrintFit() {
       const sheet = document.querySelector('.jp-sheet');
       if (!sheet) return;
       const contentHeight = sheet.scrollHeight;
-      const targetHeight = 720; // Estimasi aman tinggi 1 kertas A4 landscape
+      const targetHeight = 720;
       if (contentHeight > targetHeight) {
         let scale = targetHeight / contentHeight;
         if (scale < 0.6) {
@@ -141,17 +168,15 @@ function usePrintFit() {
 
 function LessonCard({ item, colIdx }) {
   const p = hashToPalette(item.guru?.id ?? item.guru_id);
-  const clsName = String(item.kelas_nama || item.kelas_id);
-  const badgeStr = clsName.replace(/\s*(SMK|SMP|SMA)\s*/i, '');
-  
   return (
     <div
       className="jp-card"
       style={{ '--accent': p.bd, gridColumn: colIdx > 0 ? colIdx : 'auto' }}
     >
       <div className="jp-card-mapel-wrap">
-        <span className="jp-card-kelas-badge">{badgeStr}</span>
-        <span className="jp-card-mapel">{item.mapel?.nama_mapel || '-'}</span>
+        <span className="jp-card-mapel" title={item.mapel?.nama_mapel || '-'}>
+          {item.mapel?.nama_mapel || '-'}
+        </span>
       </div>
       <div className="jp-card-guru" title={item.guru?.name || '-'}>
         {item.guru?.name || '-'}
@@ -189,19 +214,29 @@ function ScheduleTable({ normalizedRows, activeDays, classList }) {
         <tr>
           <th className="jp-th-jam">Waktu</th>
           {activeDays.map((h) => (
-            <th key={h} className="jp-th-hari">{HARI[h]}</th>
+            <th key={h} className="jp-th-hari">
+              <div className="jp-day-name">{HARI[h]}</div>
+              <div className="jp-class-names" style={{ gridTemplateColumns: `repeat(${classList.length}, minmax(0, 1fr))` }}>
+                {classList.map(cls => (
+                  <div key={cls} className="jp-class-name">
+                    {cls.replace(/\s*(SMK|SMP|SMA)\s*/i, '')}
+                  </div>
+                ))}
+              </div>
+            </th>
           ))}
         </tr>
       </thead>
       <tbody>
         {normalizedRows.map((r) => {
-          const lblUtama = r.jam_ke != null ? `Jam ke-${r.jam_ke}` : (r.timeRange !== 'unknown' ? r.timeRange : '-');
-          const lblSub = r.timeRange !== 'unknown' && lblUtama !== r.timeRange ? r.timeRange : null;
+          const lblUtama = r.type === 'istirahat'
+             ? (r.timeRange !== 'unknown' ? r.timeRange : 'Istirahat')
+             : (r.jam_ke != null ? `Jam ke-${r.jam_ke}` : (r.timeRange !== 'unknown' ? r.timeRange : '-'));
+             
           return (
             <tr key={r.rowKey}>
               <td className="jp-td-jam">
                 <div className="jp-jam-label">{lblUtama}</div>
-                {lblSub && <div className="jp-jam-sub">{lblSub}</div>}
               </td>
               {activeDays.map((h) => (
                 <ScheduleCell key={`${r.rowKey}-${h}`} items={r.cells.get(h)} classList={classList} />
@@ -306,14 +341,14 @@ export default function JadwalPelajaranCetakPage() {
       {warnings.length > 0 && (
         <div className="jp-warnings no-print">
           <strong>Peringatan Data Anomali (disembunyikan saat dicetak):</strong>
-          <ul className="list-disc pl-5 mt-1">
+          <ul className="list-disc pl-5 mt-1 text-left">
             {warnings.map((w, i) => <li key={i}>{w}</li>)}
           </ul>
         </div>
       )}
 
       <div id="jp-print-warn" className="jp-warnings no-print" style={{ display: 'none' }}>
-        Jadwal terlalu padat. Skala sudah ditekan maksimal (60%). Mungkin akan ada yang terpotong.
+        Jadwal terlalu padat. Skala sudah ditekan maksimal (60%). Mungkin akan ada konten yang terpotong.
       </div>
 
       <div className="jp-sheet">
