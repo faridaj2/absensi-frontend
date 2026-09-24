@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, Card, Button, Field, SelectInput, DateField } from '../../components/ui';
 import { laporanPegawai, laporanSiswa, filterLaporanSiswa } from '../../services/laporanService';
 import RekapGuruPanel from './RekapGuruPanel';
+import RekapSiswaPanel from './components/RekapSiswaPanel';
 import { listInstansi, listUsers } from '../../services/masterService';
 import { useAuth } from '../../contexts/AuthContext';
 import { extractError } from '../../services/apiClient';
@@ -182,6 +183,38 @@ function PegawaiMatrix({ rows, bulan }) {
       </table>
       <div className="border-t border-border-subtle bg-surface px-3 py-1.5 text-[11px] text-text-muted">
         Kode: <b>H</b>=Hadir, <b>I</b>=Izin, <b>S</b>=Sakit, <b>A</b>=Alpa
+      </div>
+    </div>
+  );
+}
+
+function SkeletonTable() {
+  return (
+    <div className="animate-pulse space-y-4">
+      <div className="h-8 bg-surface-hover rounded w-1/4"></div>
+      <div className="overflow-x-auto rounded-xl border border-border-subtle">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-surface-hover">
+              <th className="p-3 w-40"><div className="h-4 bg-border-subtle rounded"></div></th>
+              {Array.from({ length: 18 }).map((_, i) => (
+                <th key={i} className="p-2"><div className="h-4 bg-border-subtle rounded w-8 mx-auto"></div></th>
+              ))}
+              <th className="p-2"><div className="h-4 bg-border-subtle rounded w-8 mx-auto"></div></th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 15 }).map((_, i) => (
+              <tr key={i} className="border-t border-border-subtle">
+                <td className="p-3"><div className="h-4 bg-border-subtle rounded w-32"></div></td>
+                {Array.from({ length: 18 }).map((_, j) => (
+                  <td key={j} className="p-2"><div className="h-6 bg-border-subtle rounded w-6 mx-auto"></div></td>
+                ))}
+                <td className="p-2"><div className="h-4 bg-border-subtle rounded w-8 mx-auto"></div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -426,10 +459,16 @@ export default function LaporanPage() {
       } else {
         data = await laporanSiswa(params);
       }
-      setRows(data);
-      toast.success(`Menampilkan ${data.length} baris laporan.`);
+
+      setRows(data || []);
+      if (!data || data.length === 0) {
+        toast.info('Tidak ada data untuk periode ini.');
+      } else {
+        toast.success(`Menampilkan ${data.length} baris laporan.`);
+      }
     } catch (err) {
-      toast.error(extractError(err));
+      setRows([]);
+      toast.error(`Gagal memuat data: ${extractError(err)}`);
     } finally {
       setLoading(false);
     }
@@ -656,9 +695,12 @@ export default function LaporanPage() {
 
         <div className="p-4 sm:p-5">
         {loading ? (
-          <p className="py-8 text-center text-sm text-text-muted">Memuat...</p>
+          <SkeletonTable />
         ) : rows.length === 0 ? (
-          <p className="py-8 text-center text-sm text-text-muted">Belum ada data.</p>
+          <div className="py-12 text-center">
+            <p className="text-sm font-medium text-text-primary">Belum ada data absensi bulan ini.</p>
+            <p className="mt-1 text-xs text-text-muted">Silakan pilih bulan lain atau pastikan guru sudah menginput absensi untuk periode tersebut.</p>
+          </div>
         ) : mode === 'aktivitas' ? (
           <div className="overflow-x-auto rounded-xl border border-border-subtle">
             <table className="w-full min-w-[760px] text-sm">
@@ -698,11 +740,11 @@ export default function LaporanPage() {
         ) : mode === 'pegawai' ? (
           <PegawaiMatrix rows={rows} bulan={bulan} />
         ) : (
-          <div className="space-y-2">
-            {sesiGroups.map((group, gi) => (
-              <SesiGroup key={gi} group={group} />
-            ))}
-          </div>
+          <RekapSiswaPanel 
+            rows={rows} 
+            bulanLabel={bulanOptions.find((b) => b.value === bulan)?.label || bulan} 
+            bulan={bulan}
+          />
         )}
         </div>
       </Card>
